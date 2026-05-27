@@ -570,7 +570,7 @@ const UI = (() => {
 
   // ── Room screen ──────────────────────────────────────────────────────────────
   function renderRoom(state) {
-    $('room-code-display').textContent = state.roomCode || '— — — —';
+    $('room-code-display').textContent = state.roomCode || '----';
     const count = state.players.length;
     $('room-player-count').textContent = count + '/6';
 
@@ -765,9 +765,16 @@ const UI = (() => {
 
     const setErr = msg => { if (errEl) errEl.textContent = msg || ''; };
 
-    // Deep link: ?room=ABCD
+    const digitsOnly = v => String(v || '').replace(/\D/g, '').slice(0, 4);
+
+    joinInput.addEventListener('input', () => {
+      const cleaned = digitsOnly(joinInput.value);
+      if (joinInput.value !== cleaned) joinInput.value = cleaned;
+    });
+
+    // Deep link: ?room=1234
     const urlParams = new URLSearchParams(location.search);
-    const linkedCode = (urlParams.get('room') || '').toUpperCase();
+    const linkedCode = digitsOnly(urlParams.get('room'));
     if (linkedCode) joinInput.value = linkedCode;
 
     const getName = () => {
@@ -791,8 +798,8 @@ const UI = (() => {
 
     $('btn-join-room').onclick = async () => {
       const name = getName(); if (!name) return;
-      const code = (joinInput.value || '').trim().toUpperCase();
-      if (code.length !== 4) { setErr('৪ অক্ষরের রুম কোড লিখুন।'); return; }
+      const code = digitsOnly(joinInput.value);
+      if (!/^\d{4}$/.test(code)) { setErr('৪ সংখ্যার রুম কোড লিখুন।'); return; }
       setErr('');
       try {
         await Net.joinRoom(code, name);

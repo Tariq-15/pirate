@@ -35,7 +35,8 @@
 
       <div class="join-row">
         <input id="join-code-input" class="join-code-input" type="text"
-               maxlength="4" placeholder="ABCD" autocomplete="off">
+               inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+               placeholder="1234" autocomplete="off">
         <button id="btn-join-room" class="btn-ghost btn-join">যোগ দিন</button>
       </div>
 
@@ -51,7 +52,7 @@
     <header class="room-header">
       <div class="room-code-box">
         <span class="room-code-label">রুম কোড</span>
-        <span id="room-code-display" class="room-code-value">— — — —</span>
+        <span id="room-code-display" class="room-code-value">----</span>
         <button id="btn-copy-code" class="btn-copy" title="কপি করুন">📋</button>
       </div>
       <button id="btn-copy-link" class="btn-ghost btn-copy-link">🔗 শেয়ার লিঙ্ক কপি</button>

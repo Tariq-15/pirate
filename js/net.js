@@ -2,7 +2,7 @@
 // Net — Supabase room sync.
 //
 // Design:
-//   • Each room is one row in `rooms` keyed by short uppercase code.
+//   • Each room is one row in `rooms` keyed by a 4-digit numeric code.
 //   • The room's full game state lives in `rooms.state` (jsonb).
 //   • State changes are pushed via Postgres realtime (postgres_changes).
 //   • Action submission goes through the realtime broadcast channel `room:<code>`.
@@ -31,11 +31,11 @@ const Net = (() => {
     return id;
   };
 
-  const randomCode = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0,O,1,I
-    let code = '';
-    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-    return code;
+  const randomCode = () => String(Math.floor(1000 + Math.random() * 9000));
+
+  const normalizeRoomCode = raw => {
+    const digits = String(raw || '').replace(/\D/g, '');
+    return /^\d{4}$/.test(digits) ? digits : null;
   };
 
   // ── DB helpers ──────────────────────────────────────────────────────────────
@@ -175,7 +175,8 @@ const Net = (() => {
     async joinRoom(code, name) {
       username = name;
       localStorage.setItem('pirate_username', name);
-      code = code.toUpperCase();
+      code = normalizeRoomCode(code);
+      if (!code) throw new Error('৪ সংখ্যার রুম কোড লিখুন।');
       const row = await fetchRoom(code);
       if (!row) throw new Error('Room not found: ' + code);
       isHost = row.host_id === clientId;

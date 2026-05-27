@@ -770,7 +770,7 @@ body::before {
   font-family: var(--font-disp);
   font-weight: 700;
   font-size: 1.4rem;
-  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
   padding: 0.55rem 0.5rem;
 }
 .lobby-action-row { margin-top: 1rem; }
