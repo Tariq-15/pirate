@@ -1,5 +1,12 @@
-const SUPABASE_URL = 'https://yoaajumphmteyllvwcyw.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWFqdW1waG10ZXlsbHZ3Y3l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4NjkzODIsImV4cCI6MjA5NTQ0NTM4Mn0.sJvgqKWtZqtqtcEdL7Z82TbvCmyH7_aU23npttt_zb8';
+const env = window.__PIRATE_ENV__ || {};
+const SUPABASE_URL = env.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY || '';
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error(
+    'Missing Supabase config. Copy .env.example to .env, set SUPABASE_URL and SUPABASE_ANON_KEY, then run: node scripts/sync-env.js'
+  );
+}
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   realtime: { params: { eventsPerSecond: 10 } },

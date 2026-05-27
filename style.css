@@ -685,43 +685,17 @@ body::before {
   .dumped-panel { width: 165px; }
 }
 
-/* PC: hand sits in a compact strip — bottom center, only as wide as the cards */
+/* PC: right panel hand — stacked vertically, no overlap */
 @media (min-width: 768px) {
-  .hand-section {
-    display: flex;
-    justify-content: center;
-    background: transparent;
-    border-top: none;
-    padding: 0 1.25rem 0.7rem;
-  }
-  .hand-section::after { display: none; }
-  .hand-cards {
-    width: fit-content;
-    max-width: min(100%, 380px);
-    margin: 0 auto;
-    padding: 0.65rem 1rem 0.55rem;
-    background: rgba(6, 10, 22, 0.97);
-    border: 2px solid var(--gold);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 24px rgba(200, 164, 60, 0.12);
-    flex-wrap: nowrap;
-  }
   .hand-cards .card {
-    width: 148px;
-    max-width: 148px;
-  }
-  /* Exactly two cards: tight width (2 cards + gap + padding) */
-  .hand-cards:has(.card:nth-child(2):last-child) {
-    max-width: calc(148px * 2 + 1.2rem + 2rem);
+    width: min(88%, 132px);
+    max-width: 132px;
   }
 }
 @media (min-width: 1100px) {
   .hand-cards .card {
-    width: 156px;
-    max-width: 156px;
-  }
-  .hand-cards:has(.card:nth-child(2):last-child) {
-    max-width: calc(156px * 2 + 1.2rem + 2rem);
+    width: min(88%, 140px);
+    max-width: 140px;
   }
 }
 
@@ -1001,24 +975,115 @@ body::before {
 
 .play-column {
   display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto 1fr auto auto;
   gap: 0.55rem;
   padding: 0.7rem;
 }
 .log-panel {
   border: 1px solid rgba(200,164,60,0.12);
   border-radius: 10px;
-  padding: 0.5rem 0.55rem;
+  padding: 0.65rem 0.75rem;
   background: rgba(0,0,0,0.2);
-  max-height: 200px;
-  min-height: 130px;
+  max-height: 240px;
+  min-height: 150px;
   overflow-y: auto;
+  text-align: center;
 }
-.log-title { font: 700 0.7rem var(--font-en); color: var(--text2); margin-bottom: 0.3rem; text-transform: uppercase; }
-.log-list li { white-space: normal; font-size: 0.73rem; line-height: 1.35; }
+.log-title {
+  font: 700 0.82rem var(--font-en);
+  color: var(--text2);
+  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+  text-align: center;
+}
+.log-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+.log-list li {
+  font-family: var(--font-bn);
+  color: var(--text2);
+  white-space: normal;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-align: center;
+  width: 100%;
+  max-width: 36rem;
+  padding: 0.12rem 0;
+}
+.log-list li:first-child { color: var(--text); font-weight: 600; }
 .log-list li:nth-child(4) { opacity: 0.82; }
 .log-list li:nth-child(5) { opacity: 0.62; }
 .log-list li:nth-child(n+6) { opacity: 0.42; }
+
+.center-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 0;
+  flex: 1;
+}
+.center-stage {
+  position: relative;
+  width: clamp(100px, 22vw, 140px);
+  height: clamp(100px, 22vw, 140px);
+  flex-shrink: 0;
+}
+.center-stage .deck-widget,
+.center-stage .submit-zone {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+.center-stage .deck-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.center-stage .deck-backside {
+  width: 100%;
+  height: 100%;
+}
+.center-stage .deck-badge {
+  top: -6px;
+  right: -6px;
+}
+.center-stage .submit-zone {
+  border: none;
+  background: transparent;
+  max-height: none;
+  min-height: 0;
+  pointer-events: none;
+}
+.center-stage .submit-zone .card {
+  width: 100% !important;
+  max-width: 140px;
+  height: 100%;
+}
+.center-stage .deck-widget {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.center-stage .submit-zone {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.center-stage.show-played .deck-widget {
+  opacity: 0;
+  transform: scale(0.88);
+  pointer-events: none;
+}
+.center-stage.show-played .submit-zone {
+  opacity: 1;
+  transform: scale(1);
+}
 
 .right-panel {
   padding: 0.65rem;
@@ -1039,22 +1104,27 @@ body::before {
 }
 .hand-cards {
   margin-top: 0.55rem;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.15rem;
+  justify-content: flex-start;
+  gap: 0.55rem;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0.3rem 0.2rem 0.45rem;
+  padding: 0.35rem 0.25rem 0.5rem;
 }
 .hand-cards .card {
-  width: min(92%, 228px);
-  max-width: 228px;
-  margin-top: -66px;
-  transition: transform 0.18s ease, box-shadow 0.2s ease, margin 0.2s ease;
+  width: min(88%, 148px);
+  max-width: 148px;
+  flex-shrink: 0;
+  margin-top: 0;
+  transition: transform 0.18s ease, box-shadow 0.2s ease;
 }
-.hand-cards .card:first-child { margin-top: 0; }
-.hand-cards .card:hover { transform: translateY(-6px) scale(1.02); margin-top: -52px; z-index: 2; }
+.hand-cards .card:hover {
+  transform: translateY(-4px) scale(1.02);
+  z-index: 2;
+}
 .waiting-overlay { border-radius: 10px; }
 
 body:not(.show-card-details) .card-text-bn { display: none; }

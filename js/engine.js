@@ -94,6 +94,8 @@ const Engine = (() => {
       p.mustPlayCaptain = true;
     }
     addLog(S, `${p.username}-এর টার্ন — ডেক: ${S.deck.length}।`);
+    S.lastPlayedCard = null;
+    S.lastPlayedBy = null;
     S.phase = PHASES.TURN_PLAY;
     S.pending = null;
     S.lastEvent = { type: 'TURN_START', seat: S.turnIndex, t: Date.now() };
@@ -244,6 +246,12 @@ const Engine = (() => {
       return { ok: true };
     }
 
+    const cardDef = CARD_DB[card.code];
+    if (card.code !== 'CREW') {
+      const tgtName = target?.username || actor.username;
+      addLog(S, `🎯 ${actor.username} → ${tgtName} (${cardDef?.en || card.code})`);
+    }
+
     switch (card.code) {
       case 'GUARD':
         S.phase = PHASES.NEEDS_GUARD;
@@ -252,9 +260,11 @@ const Engine = (() => {
 
       case 'CREW': {
         if (!target?.hand[0]) { finishTurn(S); return { ok: true }; }
-        addLog(S, `${actor.username} গোপনে ${target.username}-এর কার্ড দেখছেন।`);
+        const peeked = target.hand[0];
+        const peekDef = CARD_DB[peeked.code];
+        addLog(S, `👁️ ${actor.username} checked ${target.username}: ${peekDef?.en || peeked.code} (${peekDef?.name || peeked.code})`);
         S.phase = PHASES.PEEKING;
-        S.pending = { card, targetId: target.playerId, peekedCard: { ...target.hand[0] } };
+        S.pending = { card, targetId: target.playerId, peekedCard: { ...peeked } };
         return { ok: true };
       }
 
@@ -277,7 +287,9 @@ const Engine = (() => {
         if (!target) { finishTurn(S); return { ok: true }; }
         const aRank = actor.hand[0]?.rank ?? -1;
         const tRank = target.hand[0]?.rank ?? -1;
-        addLog(S, `⚔️ ${actor.username}(${aRank}) বনাম ${target.username}(${tRank})`);
+        const aName = CARD_DB[actor.hand[0]?.code]?.en || '?';
+        const tName = CARD_DB[target.hand[0]?.code]?.en || '?';
+        addLog(S, `⚔️ ${actor.username} (${aName}, rank ${aRank}) vs ${target.username} (${tName}, rank ${tRank})`);
         if (aRank === tRank) addLog(S, 'টাই — কেউ বাদ নয়।');
         else eliminate(S, aRank < tRank ? actor.playerId : target.playerId, {
           byPlayerId: aRank < tRank ? target.playerId : actor.playerId,
@@ -291,7 +303,9 @@ const Engine = (() => {
       case 'SAILOR': {
         if (!target) { finishTurn(S); return { ok: true }; }
         [actor.hand[0], target.hand[0]] = [target.hand[0], actor.hand[0]];
-        addLog(S, `🔄 ${actor.username} ${target.username}-এর সাথে হাত বদল!`);
+        const aAfter = CARD_DB[actor.hand[0]?.code]?.en || '?';
+        const tAfter = CARD_DB[target.hand[0]?.code]?.en || '?';
+        addLog(S, `🔄 ${actor.username} swapped with ${target.username} — now ${actor.username}: ${aAfter}, ${target.username}: ${tAfter}`);
         for (const pid of [actor.playerId, target.playerId]) {
           const pp = getPlayer(S, pid);
           if (pp.hand[0]?.code === 'PIRATE') {
@@ -349,6 +363,13 @@ const Engine = (() => {
 
   const actClosePeek = S => {
     if (S.phase !== PHASES.PEEKING) return { error: 'Bad phase.' };
+    const actor = S.players[S.turnIndex];
+    const pending = S.pending;
+    if (pending?.peekedCard && pending.targetId) {
+      const target = getPlayer(S, pending.targetId);
+      const def = CARD_DB[pending.peekedCard.code];
+      addLog(S, `✓ ${actor.username} finished checking ${target?.username || '?'}: ${def?.en || pending.peekedCard.code}`);
+    }
     finishTurn(S);
     return { ok: true };
   };

@@ -179,7 +179,7 @@ const UI = (() => {
     const content = $('submit-content');
     if (!content) return;
     if (!card) {
-      content.innerHTML = '<span class="submit-empty">—</span>';
+      content.innerHTML = '';
       renderedPlayedUid = null;
       return;
     }
@@ -191,6 +191,18 @@ const UI = (() => {
     if (el) {
       el.getBoundingClientRect();
       el.classList.add('card-slam');
+    }
+  }
+
+  function renderCenterStage(state) {
+    const stage = $('center-stage');
+    if (!stage) return;
+    const showPlayed = !!state.lastPlayedCard;
+    stage.classList.toggle('show-played', showPlayed);
+    if (showPlayed) {
+      renderSubmitZone(state.lastPlayedCard);
+    } else {
+      renderSubmitZone(null);
     }
   }
 
@@ -561,13 +573,7 @@ const UI = (() => {
         renderDeck(state);
         renderLog(state);
         renderDeathPrompt(state);
-
-        // Show submit-zone replay of last played card (persists across turns)
-        if (state.lastPlayedCard) {
-          renderSubmitZone(state.lastPlayedCard);
-        } else {
-          renderSubmitZone(null);
-        }
+        renderCenterStage(state);
 
         // Animate the draw when a new turn begins, once per turn
         const turnKey = state.roundNum + ':' + state.turnIndex + ':' + state.players[state.turnIndex]?.playerId;

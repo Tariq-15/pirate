@@ -109,11 +109,16 @@
           <ul id="log-list" class="log-list"></ul>
         </div>
 
-        <div class="center-deck-row">
-          <div class="deck-widget" id="deck-visual">
-            <div class="deck-stack">
-              <img src="Image/card-backside.jpeg" id="deck-img" class="deck-backside" alt="Deck">
-              <div class="deck-badge" id="deck-count">0</div>
+        <div class="center-area">
+          <div class="center-stage" id="center-stage">
+            <div class="deck-widget" id="deck-visual">
+              <div class="deck-stack">
+                <img src="Image/card-backside.jpeg" id="deck-img" class="deck-backside" alt="Deck">
+                <div class="deck-badge" id="deck-count">0</div>
+              </div>
+            </div>
+            <div class="submit-zone" id="submit-zone">
+              <div id="submit-content"><span class="submit-empty">—</span></div>
             </div>
           </div>
           <div class="burn-fd-widget">
@@ -125,10 +130,6 @@
         <div class="center-meta">
           <div class="round-badge" id="round-badge">R1</div>
           <div class="turn-pill" id="current-player-label">—</div>
-        </div>
-
-        <div class="submit-zone" id="submit-zone">
-          <div id="submit-content"><span class="submit-empty">—</span></div>
         </div>
 
         <div id="burn-face-up" class="burn-faceup-row"></div>
@@ -238,6 +239,7 @@
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
+<script src="js/env.local.js"></script>
 <script src="js/config.js"></script>
 <script src="js/cards.js"></script>
 <script src="js/engine.js"></script>
