@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>জলদস্যু — Pirate Card Game</title>
+  <title>জলদস্যু</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@300;400;500;600;700&family=Cinzel:wght@400;700;900&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@300;400;500;600;700&family=Cinzel:wght@400;700;900&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Baloo+Da+2:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,7 +17,7 @@
   <div class="lobby-wrap">
     <div class="lobby-hero-panel">
       <div class="lobby-emblem">
-        <img src="illustration/home-image.png" alt="জলদস্যু — Pirate Card Game" class="lobby-hero-img">
+        <img src="illustration/home-image.png" alt="জলদস্যু" class="lobby-hero-img">
       </div>
       <p class="lobby-tagline">২–৬ জন খেলোয়াড় • অনলাইন রুম-ভিত্তিক</p>
     </div>
@@ -62,101 +62,18 @@
     <div id="room-seats" class="room-seats"></div>
 
     <div class="room-actions">
-      <button id="btn-add-ai" class="btn-ghost">🤖 AI খেলোয়াড় যোগ করুন</button>
+      <button id="btn-add-ai" class="btn-ghost">🤖 এআই খেলোয়াড় যোগ করুন</button>
       <button id="btn-start-game" class="btn-primary btn-xl">⚓ যাত্রা শুরু</button>
     </div>
 
-    <p id="room-hint" class="room-hint">শেয়ার লিঙ্ক বন্ধুদের পাঠান, বা AI যোগ করুন।</p>
+    <p id="room-hint" class="room-hint">শেয়ার লিঙ্ক বন্ধুদের পাঠান, বা এআই যোগ করুন।</p>
     <button id="btn-leave-room" class="btn-ghost btn-leave">↩ রুম থেকে বের হন</button>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════ GAME ══ -->
 <div id="screen-game" class="screen">
-  <div class="game-layout">
-    <div class="game-main">
-      <aside class="side-panel side-panel-left">
-        <div class="log-panel">
-          <div class="log-title">Round Log</div>
-          <ul id="log-list" class="log-list"></ul>
-        </div>
-        <div class="status-block">
-          <div class="status-block-title">Played / Dumped</div>
-          <div id="lp-discards" class="dumped-list"></div>
-        </div>
-      </aside>
-
-      <div class="play-column">
-        <div class="middle-top">
-          <div class="status-panel status-panel-compact">
-            <h3 class="panel-title">Status</h3>
-            <div class="status-kv-row">
-              <div class="status-kv">
-                <span>Cards In Play</span>
-                <strong id="status-in-play-count">0</strong>
-              </div>
-              <div class="status-kv">
-                <span>Round</span>
-                <strong id="round-badge-top">R1</strong>
-              </div>
-              <div class="status-kv">
-                <span>Deck</span>
-                <strong id="status-deck-count">0</strong>
-              </div>
-            </div>
-            <div class="status-kv">
-              <span>Last Played</span>
-              <strong id="status-last-played">—</strong>
-            </div>
-          </div>
-
-          <div id="player-strip" class="player-strip"></div>
-        </div>
-
-        <div class="center-area">
-          <div class="center-stage" id="center-stage">
-            <div class="deck-widget" id="deck-visual">
-              <div class="deck-stack">
-                <img src="illustration/card-backside.png" id="deck-img" class="deck-backside" alt="Deck">
-                <div class="deck-badge" id="deck-count">0</div>
-              </div>
-            </div>
-            <div class="submit-zone" id="submit-zone">
-              <div id="submit-content"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="center-meta">
-          <div class="round-badge" id="round-badge">R1</div>
-          <div class="turn-pill" id="current-player-label">—</div>
-        </div>
-
-        <div id="burn-face-up" class="burn-faceup-row"></div>
-      </div>
-
-      <aside class="side-panel side-panel-right">
-        <div class="right-panel" id="hand-section">
-          <div id="captain-hint" class="captain-hint" style="display:none">
-            ⚠️ আপনাকে অবশ্যই <strong>ক্যাপ্টেন</strong> খেলতে হবে!
-          </div>
-          <div class="right-panel-head">
-            <div id="hand-label" class="hand-label">আপনার কার্ড</div>
-            <label class="details-toggle">
-              <input id="toggle-card-details" type="checkbox">
-              <span>Show details</span>
-            </label>
-          </div>
-          <div id="death-prompt" class="death-prompt hidden"></div>
-          <div id="hand-cards" class="hand-cards"></div>
-          <div id="waiting-overlay" class="waiting-overlay" style="display:none">
-            <div class="waiting-spinner"></div>
-            <div id="waiting-text">অপেক্ষা করছেন…</div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
+  <div id="sea-root"></div>
 </div>
 
 <!-- ══════════════════════════════════════════════════ ROUND OVER ══ -->
@@ -233,14 +150,15 @@
 </div>
 
 <!-- Floating guide button -->
-<button id="btn-guide" class="btn-guide-float" title="Card Reference Guide">
+<button id="btn-guide" class="btn-guide-float" title="কার্ড রেফারেন্স গাইড">
   <span class="guide-icon">📖</span>
-  <span class="guide-label">Guide</span>
+  <span class="guide-label">গাইড</span>
 </button>
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
+<!-- Game logic (vanilla JS) -->
 <script src="js/env.local.js"></script>
 <script src="js/config.js"></script>
 <script src="js/cards.js"></script>
@@ -249,5 +167,13 @@
 <script src="js/net.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
+
+<!-- React + Babel for Seven Seas game UI -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script type="text/babel" src="js/sea-card-art.jsx"></script>
+<script type="text/babel" src="js/popup-overlays.jsx"></script>
+<script type="text/babel" src="js/sea-scene.jsx"></script>
 </body>
 </html>

@@ -54,7 +54,7 @@ const UI = (() => {
     return `
       <div class="${cls}" ${data}>
         <div class="card-img-wrap">
-          <img src="${def.img}" alt="${def.en}" loading="lazy">
+          <img src="${def.img}" alt="${def.name}" loading="lazy">
           <span class="card-rank-badge">${def.rank}</span>
         </div>
         <div class="card-name-bar">
@@ -199,9 +199,9 @@ const UI = (() => {
     if (roundTopEl) roundTopEl.textContent = 'R' + (state.roundNum || 1);
     if (lastPlayedEl) {
       if (state.lastPlayedCard && state.lastPlayedBy) {
-        const who = state.players.find(p => p.playerId === state.lastPlayedBy)?.username || 'Unknown';
+        const who = state.players.find(p => p.playerId === state.lastPlayedBy)?.username || '?';
         const card = CARD_DB[state.lastPlayedCard.code];
-        lastPlayedEl.textContent = `${who} • ${card?.en || state.lastPlayedCard.code}`;
+        lastPlayedEl.textContent = `${who} • ${card?.name || state.lastPlayedCard.code}`;
       } else {
         lastPlayedEl.textContent = '—';
       }
@@ -221,7 +221,7 @@ const UI = (() => {
             const c = CARD_DB[code];
             if (!c) return '';
             return `<div class="dumped-row">
-              <img src="${c.img}" class="dumped-thumb" alt="${c.en}" title="${c.en}">
+              <img src="${c.img}" class="dumped-thumb" alt="${c.name}" title="${c.name}">
               <span class="dumped-name">${c.name}</span>
               <span class="dumped-count-badge">${count}</span>
             </div>`;
@@ -296,7 +296,7 @@ const UI = (() => {
     }
 
     const myTurn = isMyTurn(state);
-    if (label) label.textContent = me.isAlive ? 'Your Cards' : 'You Are Out';
+    if (label) label.textContent = me.isAlive ? 'তোমার কার্ড' : 'তুমি বাদ';
 
     container.innerHTML = me.hand.map((card, i) => {
       const disabled = !myTurn || !me.isAlive || (me.mustPlayCaptain && card.code !== 'CAPTAIN') ||
@@ -320,7 +320,7 @@ const UI = (() => {
       const death = state.lastDeathNotice;
       prompt.textContent = (death && death.playerId === me.playerId && death.msg)
         ? death.msg
-        : 'You were eliminated this round.';
+        : 'এই রাউন্ডে তুমি বাদ পড়েছ।';
       prompt.classList.remove('hidden');
     } else if (me.isAlive) {
       prompt.classList.add('hidden');
@@ -342,8 +342,8 @@ const UI = (() => {
       else fuRow.innerHTML = state.burnFaceUp.map(c => {
         const def = CARD_DB[c.code];
         return `
-          <div class="burn-card-wrap" title="${def.en} — Rank ${def.rank}">
-            <img src="${def.img}" class="burn-card-face" alt="${def.en}">
+          <div class="burn-card-wrap" title="${def.name} — শক্তি ${def.rank}">
+            <img src="${def.img}" class="burn-card-face" alt="${def.name}">
             <span class="burn-card-rank-badge">${def.rank}</span>
           </div>`;
       }).join('');
@@ -381,28 +381,14 @@ const UI = (() => {
   }
 
   // ── Modals based on phase + ownership ─────────────────────────────────────────
+  // NEEDS_TARGET / NEEDS_GUARD / NEEDS_MERCHANT are handled by React popup-overlays.
   function renderPhaseModals(state) {
     const myTurn = isMyTurn(state);
-    if (!myTurn) {
-      // Make sure we close any modal that was previously open
+    if (!myTurn) { hideModals(); return; }
+    if (state.phase === Engine.PHASES.PEEKING) {
+      showPeekModal(state);
+    } else {
       hideModals();
-      return;
-    }
-    switch (state.phase) {
-      case Engine.PHASES.NEEDS_TARGET:
-        showTargetModal(state);
-        break;
-      case Engine.PHASES.NEEDS_GUARD:
-        showGuardModal(state);
-        break;
-      case Engine.PHASES.NEEDS_MERCHANT:
-        showMerchantModal(state);
-        break;
-      case Engine.PHASES.PEEKING:
-        showPeekModal(state);
-        break;
-      default:
-        hideModals();
     }
   }
 
@@ -416,7 +402,7 @@ const UI = (() => {
       targets = [state.players[state.turnIndex]];
     }
     const title = $('target-title');
-    if (title) title.textContent = `${cardDef.en} — একজন লক্ষ্য বেছে নিন`;
+    if (title) title.textContent = `${cardDef.name} — একজন লক্ষ্য বেছে নিন`;
 
     const list = $('target-list');
     if (list) {
@@ -450,8 +436,8 @@ const UI = (() => {
       const choices = Object.values(CARD_DB).filter(c => c.code !== 'GUARD');
       list.innerHTML = choices.map(c => `
         <button class="guard-btn" data-code="${c.code}">
-          <img src="${c.img}" alt="${c.en}">
-          <span>${c.en}</span>
+          <img src="${c.img}" alt="${c.name}">
+          <span>${c.name}</span>
           <span class="guard-rank">${c.rank}</span>
         </button>`).join('');
       list.querySelectorAll('.guard-btn').forEach(btn =>
@@ -501,7 +487,7 @@ const UI = (() => {
     const card = me.hand[idx];
     if (!card) return;
     if (me.mustPlayCaptain && card.code !== 'CAPTAIN') {
-      showToast('আপনাকে অবশ্যই ক্যাপ্টেন খেলতে হবে!'); return;
+      return;
     }
     Net.submit({ type: 'PLAY_CARD', cardIdx: idx });
   }
@@ -578,10 +564,10 @@ const UI = (() => {
     seatsEl.innerHTML = state.players.map((p, i) => {
       const isMe = p.clientId === Net.getClientId();
       const isHostSeat = p.clientId === state.hostId;
-      const tag = p.isAI ? '🤖 AI' : (isHostSeat ? '👑 হোস্ট' : '🎭 অতিথি');
+      const tag = p.isAI ? '🤖 এআই' : (isHostSeat ? '👑 হোস্ট' : '🎭 অতিথি');
       const meTag = isMe ? '<span class="seat-me">(আপনি)</span>' : '';
       const removeBtn = Net.amHost() && !isMe
-        ? `<button class="seat-remove" data-idx="${i}" title="Remove">✕</button>` : '';
+        ? `<button class="seat-remove" data-idx="${i}" title="সরান">✕</button>` : '';
       return `
         <div class="room-seat">
           <span class="seat-num">${i + 1}</span>
@@ -608,7 +594,7 @@ const UI = (() => {
       addAiBtn.style.display = count < 6 ? '' : 'none';
       startBtn.disabled = count < 2;
       $('room-hint').textContent = count < 2
-        ? 'কমপক্ষে ২ জন খেলোয়াড় দরকার। শেয়ার লিঙ্ক পাঠান বা AI যোগ করুন।'
+        ? 'কমপক্ষে ২ জন খেলোয়াড় দরকার। শেয়ার লিঙ্ক পাঠান বা এআই যোগ করুন।'
         : 'প্রস্তুত? "যাত্রা শুরু" তে ক্লিক করুন!';
     } else {
       startBtn.style.display = 'none';
@@ -657,65 +643,14 @@ const UI = (() => {
 
       default: {
         showScreen('game');
-        renderMeta(state);
-        renderTopBar(state);
-        renderDeck(state);
-        renderLog(state);
-        renderDeathPrompt(state);
-
-        const evKey = eventKey(state);
-        const playedUid = state.lastPlayedCard?.uid ?? null;
-        const playedKey = playedUid == null ? null : `${state.roundNum}:${playedUid}`;
-        const isNewPlay = !!playedKey && playedKey !== lastAnimatedPlayKey;
-
-        const finishFrame = () => {
-          renderHand(state);
-          updateWaitingOverlay(state);
-          renderPhaseModals(state);
-        };
-
-        if (isNewPlay) {
-          lastAnimatedPlayKey = playedKey;
-          lastProcessedEventKey = evKey;
-          const playedById = state.lastPlayedBy
-            || state.lastEvent?.by
-            || state.players[state.turnIndex]?.playerId;
-          renderCenterStage({ ...state, lastPlayedCard: null });
-          requestAnimationFrame(() => {
-            const playerBox = getPlayerBoxEl(playedById);
-            if (playerBox) playerBox.classList.add('is-playing');
-            animatePlayToCenter(state.lastPlayedCard, playedById, () => {
-              if (playerBox) playerBox.classList.remove('is-playing');
-              renderCenterStage(state);
-              finishFrame();
-              done();
-            });
-          });
-          return;
-        }
-
-        renderCenterStage(state);
-
-        const turnKey = state.roundNum + ':' + state.turnIndex + ':' + state.players[state.turnIndex]?.playerId;
-        const isFreshTurn = (state.phase === Engine.PHASES.TURN_PLAY)
-          && (state.lastEvent?.type === 'TURN_START')
-          && (didAnimateThisTurn !== turnKey);
-
-        if (isFreshTurn) {
-          didAnimateThisTurn = turnKey;
-          if (evKey) lastProcessedEventKey = evKey;
-          const curId = state.players[state.turnIndex]?.playerId;
-          const playerBox = getPlayerBoxEl(curId);
-          if (playerBox) playerBox.classList.add('is-drawing');
-          animateDrawToPlayer(curId, () => {
-            if (playerBox) playerBox.classList.remove('is-drawing');
-            finishFrame();
-            done();
-          });
+        // Route game state to the React Seven Seas UI
+        if (window.SeaUI?.render) {
+          window.SeaUI.render(state);
         } else {
-          finishFrame();
-          done();
+          window._pendingSeaState = state;
         }
+        renderPhaseModals(state);
+        done();
         return;
       }
     }
@@ -729,30 +664,18 @@ const UI = (() => {
     grid.innerHTML = Object.values(CARD_DB).sort((a, b) => b.rank - a.rank).map(card => `
       <div class="guide-card">
         <div class="guide-img-wrap">
-          <img src="${card.img}" alt="${card.en}" loading="lazy">
+          <img src="${card.img}" alt="${card.name}" loading="lazy">
           <span class="guide-rank-badge">${card.rank}</span>
         </div>
         <div class="guide-card-meta">
-          <span class="guide-card-name">${card.en}</span>
+          <span class="guide-card-name">${card.name}</span>
           <span class="guide-card-qty">×${card.qty}</span>
         </div>
         <p class="guide-card-text">${card.text}</p>
       </div>`).join('');
   }
 
-  // ── Toast ────────────────────────────────────────────────────────────────────
-  function showToast(msg) {
-    let toast = $('toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'toast';
-      document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.classList.add('toast-show');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => toast.classList.remove('toast-show'), 2600);
-  }
+  function showToast(_msg) { /* bottom toast removed */ }
 
   // ── Lobby (pre-room) ─────────────────────────────────────────────────────────
   function initLobby() {
@@ -823,8 +746,7 @@ const UI = (() => {
       if (!code) return;
       try {
         await navigator.clipboard.writeText(code);
-        showToast('রুম কোড কপি হয়েছে: ' + code);
-      } catch { showToast(code); }
+      } catch { /* clipboard unavailable */ }
     };
     $('btn-copy-link').onclick = async () => {
       const code = Net.getRoomCode();
@@ -833,8 +755,7 @@ const UI = (() => {
       url.searchParams.set('room', code);
       try {
         await navigator.clipboard.writeText(url.toString());
-        showToast('লিঙ্ক কপি হয়েছে!');
-      } catch { showToast(url.toString()); }
+      } catch { /* clipboard unavailable */ }
     };
     $('btn-add-ai').onclick = () => Net.submit({ type: 'ADD_AI' });
     $('btn-start-game').onclick = () => Net.submit({ type: 'START_GAME' });

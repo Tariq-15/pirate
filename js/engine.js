@@ -32,8 +32,9 @@ const Engine = (() => {
     return deck;
   };
 
-  const addLog = (S, msg) => {
-    S.log.unshift({ msg, t: Date.now() });
+  const addLog = (S, msg, meta = {}) => {
+    const turnKey = meta.turnKey ?? `r${S.roundNum}:t${S.turnIndex}`;
+    S.log.unshift({ msg, t: Date.now(), turnKey });
     if (S.log.length > 60) S.log.pop();
   };
 
@@ -52,20 +53,43 @@ const Engine = (() => {
     if (!p || !p.isAlive) return;
     p.isAlive = false;
     while (p.hand.length) p.discards.push(p.hand.pop());
-    const byName = info.byPlayerId ? (getPlayer(S, info.byPlayerId)?.username || 'Unknown') : null;
-    let msg = `💀 ${p.username} was eliminated.`;
-    if (info.reason === 'GUARD_GUESS') msg = `💀 ${p.username} was eliminated by ${byName}'s Guard guess (${info.cardCode}).`;
-    else if (info.reason === 'SWORDSMAN_DUEL') msg = `💀 ${p.username} lost a Swordsman duel against ${byName}.`;
-    else if (info.reason === 'PIRATE_PLAYED') msg = `💀 ${p.username} played Pirate and got eliminated.`;
-    else if (info.reason === 'PIRATE_FORCED_DISCARD') msg = `💀 ${p.username} discarded Pirate and got eliminated.`;
-    S.lastDeathNotice = {
+    const byName = info.byPlayerId ? (getPlayer(S, info.byPlayerId)?.username || '?') : null;
+    const cardName = info.cardCode ? (CARD_DB[info.cardCode]?.name || info.cardCode) : null;
+    let msg = `💀 ${p.username} বাদ পড়েছেন।`;
+    let description = `${p.username} এই রাউন্ড থেকে বাদ পড়েছেন।`;
+    if (info.reason === 'GUARD_GUESS') {
+      msg = `💀 ${p.username} ${byName}-এর পাহারাদার অনুমানে (${cardName}) বাদ পড়েছেন।`;
+      description = `${byName} পাহারাদার হিসেবে ${cardName} অনুমান করেছিলেন — ${p.username}-এর হাতে ঠিক সেই তাস ছিল, তাই তিনি বাদ পড়েছেন।`;
+    } else if (info.reason === 'SWORDSMAN_DUEL') {
+      msg = `💀 ${p.username} ${byName}-এর বিরুদ্ধে তলোয়ারের লড়াইয়ে হেরেছেন।`;
+      description = `${p.username} ও ${byName}-এর মধ্যে তলোয়ারের লড়াইয়ে ${p.username}-এর তাসের শক্তি কম ছিল, তাই তিনি বাদ পড়েছেন।`;
+    } else if (info.reason === 'PIRATE_PLAYED') {
+      msg = `💀 ${p.username} জলদস্যু খেলে বাদ পড়েছেন।`;
+      description = `${p.username} নিজে জলদস্যু তাস খেলেছেন — নিয়ম অনুযায়ী তিনি সঙ্গে সঙ্গে বাদ পড়েছেন।`;
+    } else if (info.reason === 'PIRATE_FORCED_DISCARD' && info.cardCode === 'CANNONEER') {
+      msg = `💀 ${p.username} ${byName}-এর কামানদারে জলদস্যু ফেলতে বাধ্য হয়ে বাদ পড়েছেন।`;
+      description = `${byName}-এর কামানদার ${p.username}-কে একটি তাস ফেলতে বাধ্য করেছিল — ফেলা তাসটি জলদস্যু ছিল, তাই ${p.username} বাদ পড়েছেন।`;
+    } else if (info.reason === 'PIRATE_FORCED_DISCARD' && info.cardCode === 'SAILOR') {
+      msg = `💀 ${p.username} ${byName}-এর নাবিক বদলে জলদস্যু পেয়ে বাদ পড়েছেন।`;
+      description = `${byName}-এর নাবিক তাস বদলের পর ${p.username}-এর হাতে জলদস্যু এসেছিল — তাই তিনি বাদ পড়েছেন।`;
+    } else if (info.reason === 'PIRATE_FORCED_DISCARD') {
+      msg = `💀 ${p.username} জলদস্যু ফেলে বাদ পড়েছেন।`;
+      description = `${p.username} জলদস্যু তাস ফেলতে বাধ্য হয়েছিলেন — নিয়ম অনুযায়ী তিনি বাদ পড়েছেন।`;
+    }
+    const notice = {
       playerId: p.playerId,
+      username: p.username,
       byPlayerId: info.byPlayerId || null,
       cardCode: info.cardCode || null,
       reason: info.reason || 'ELIMINATED',
       msg,
+      description,
       t: Date.now(),
     };
+    if (!S.deathNotices) S.deathNotices = [];
+    S.deathNotices.push(notice);
+    S.lastDeathNotice = notice;
+    S.lastEvent = { type: 'PLAYER_ELIMINATED', playerId: p.playerId, t: notice.t };
     addLog(S, `💀 ${p.username} বাদ পড়েছেন!`);
   };
 
@@ -115,6 +139,8 @@ const Engine = (() => {
     S.lastPlayedCard = null;
     S.lastPlayedBy   = null;
     S.lastDeathNotice = null;
+    S.deathNotices = [];
+    S.lastCinematic = null;
     S.players.forEach(p => {
       p.hand = []; p.discards = [];
       p.isAlive = true; p.isProtected = false; p.mustPlayCaptain = false;
@@ -127,7 +153,7 @@ const Engine = (() => {
       for (let i = 0; i < 3; i++) S.burnFaceUp.push(S.deck.pop());
     }
     S.players.forEach(p => p.hand.push(S.deck.pop()));
-    addLog(S, `⚓ রাউন্ড ${S.roundNum} শুরু! ডেক: ${S.deck.length}।`);
+    addLog(S, `⚓ রাউন্ড ${S.roundNum} শুরু! ডেক: ${S.deck.length}।`, { turnKey: `r${S.roundNum}:init` });
     startTurn(S);
   };
 
@@ -146,13 +172,13 @@ const Engine = (() => {
     const results = { reason, winners: [] };
     if (reason === 'ALPHA') {
       const survivor = getAlive(S)[0];
-      if (survivor) { survivor.tokens++; results.winners = [survivor.playerId]; addLog(S, `🏆 ${survivor.username} রাউন্ড জিতেছেন!`); }
+      if (survivor) { survivor.tokens++; results.winners = [survivor.playerId]; addLog(S, `🏆 ${survivor.username} রাউন্ড জিতেছেন!`, { turnKey: `r${S.roundNum}:end` }); }
     } else {
       const alive = getAlive(S);
       if (alive.length) {
         const maxRank = Math.max(...alive.map(p => p.hand[0]?.rank ?? -1));
         const tops = alive.filter(p => (p.hand[0]?.rank ?? -1) === maxRank);
-        tops.forEach(p => { p.tokens++; addLog(S, `🏆 ${p.username} (র‍্যাঙ্ক ${maxRank}) জিতেছেন!`); });
+        tops.forEach(p => { p.tokens++; addLog(S, `🏆 ${p.username} (র‍্যাঙ্ক ${maxRank}) জিতেছেন!`, { turnKey: `r${S.roundNum}:end` }); });
         results.winners = tops.map(p => p.playerId);
       }
     }
@@ -171,18 +197,18 @@ const Engine = (() => {
   // ─── action handlers ────────────────────────────────────────────────────────
 
   const actPlayCard = (S, action) => {
-    if (S.phase !== PHASES.TURN_PLAY) return { error: 'Not your turn.' };
+    if (S.phase !== PHASES.TURN_PLAY) return { error: 'আপনার টার্ন নয়।' };
     const p = S.players[S.turnIndex];
     const card = p.hand[action.cardIdx];
-    if (!card) return { error: 'Invalid card.' };
-    if (p.mustPlayCaptain && card.code !== 'CAPTAIN') return { error: 'Must play Captain!' };
+    if (!card) return { error: 'অবৈধ কার্ড।' };
+    if (p.mustPlayCaptain && card.code !== 'CAPTAIN') return { error: 'ক্যাপ্টেন খেলতে হবে!' };
 
     p.hand.splice(action.cardIdx, 1);
     p.discards.push(card);
     S.lastPlayedCard = card;
     S.lastPlayedBy = p.playerId;
     S.lastEvent = { type: 'PLAY_CARD', card, by: p.playerId, t: Date.now() };
-    addLog(S, `${p.username} খেলেছেন ${CARD_DB[card.code].en}।`);
+    addLog(S, `${p.username} খেলেছেন ${CARD_DB[card.code].name}।`);
 
     if (card.code === 'PIRATE') {
       eliminate(S, p.playerId, { byPlayerId: p.playerId, cardCode: 'PIRATE', reason: 'PIRATE_PLAYED' });
@@ -233,7 +259,7 @@ const Engine = (() => {
   };
 
   const actPickTarget = (S, action) => {
-    if (S.phase !== PHASES.NEEDS_TARGET) return { error: 'Bad phase.' };
+    if (S.phase !== PHASES.NEEDS_TARGET) return { error: 'ভুল পর্যায়।' };
     const actor = S.players[S.turnIndex];
     const card  = S.pending.card;
     const target = action.targetId ? getPlayer(S, action.targetId) : null;
@@ -247,7 +273,7 @@ const Engine = (() => {
     const cardDef = CARD_DB[card.code];
     if (card.code !== 'CREW') {
       const tgtName = target?.username || actor.username;
-      addLog(S, `🎯 ${actor.username} → ${tgtName} (${cardDef?.en || card.code})`);
+      addLog(S, `🎯 ${actor.username} → ${tgtName} (${cardDef?.name || card.code})`);
     }
 
     switch (card.code) {
@@ -260,7 +286,7 @@ const Engine = (() => {
         if (!target?.hand[0]) { finishTurn(S); return { ok: true }; }
         const peeked = target.hand[0];
         const peekDef = CARD_DB[peeked.code];
-        addLog(S, `👁️ ${actor.username} checked ${target.username}: ${peekDef?.en || peeked.code} (${peekDef?.name || peeked.code})`);
+        addLog(S, `👁️ ${actor.username} ${target.username}-এর কার্ড দেখেছেন: ${peekDef?.name || peeked.code}`);
         S.phase = PHASES.PEEKING;
         S.pending = { card, targetId: target.playerId, peekedCard: { ...peeked } };
         return { ok: true };
@@ -271,11 +297,19 @@ const Engine = (() => {
         const dropped = tgt.hand.splice(0, 1)[0];
         if (!dropped) { finishTurn(S); return { ok: true }; }
         tgt.discards.push(dropped);
-        addLog(S, `💥 ${tgt.username}-কে ফেলতে হয়েছে: ${CARD_DB[dropped.code].en}।`);
+        addLog(S, `💥 ${tgt.username}-কে ফেলতে হয়েছে: ${CARD_DB[dropped.code].name}।`);
+        S.lastCinematic = {
+          type: 'CANNONEER_BLAST',
+          targetId: tgt.playerId,
+          targetName: tgt.username,
+          droppedCode: dropped.code,
+          t: Date.now(),
+        };
         if (dropped.code === 'PIRATE') {
           eliminate(S, tgt.playerId, { byPlayerId: actor.playerId, cardCode: 'CANNONEER', reason: 'PIRATE_FORCED_DISCARD' });
         } else {
           drawForPlayer(S, tgt);
+          S.lastEvent = { type: 'DRAW_CARD', playerId: tgt.playerId, t: Date.now() };
         }
         finishTurn(S);
         return { ok: true };
@@ -283,17 +317,35 @@ const Engine = (() => {
 
       case 'SWORDSMAN': {
         if (!target) { finishTurn(S); return { ok: true }; }
-        const aRank = actor.hand[0]?.rank ?? -1;
-        const tRank = target.hand[0]?.rank ?? -1;
-        const aName = CARD_DB[actor.hand[0]?.code]?.en || '?';
-        const tName = CARD_DB[target.hand[0]?.code]?.en || '?';
-        addLog(S, `⚔️ ${actor.username} (${aName}, rank ${aRank}) vs ${target.username} (${tName}, rank ${tRank})`);
-        if (aRank === tRank) addLog(S, 'টাই — কেউ বাদ নয়।');
-        else eliminate(S, aRank < tRank ? actor.playerId : target.playerId, {
-          byPlayerId: aRank < tRank ? target.playerId : actor.playerId,
-          cardCode: 'SWORDSMAN',
-          reason: 'SWORDSMAN_DUEL',
-        });
+        const attackerCard = actor.hand[0];
+        const targetCard = target.hand[0];
+        const aRank = attackerCard?.rank ?? -1;
+        const tRank = targetCard?.rank ?? -1;
+        const aName = CARD_DB[attackerCard?.code]?.name || '?';
+        const tName = CARD_DB[targetCard?.code]?.name || '?';
+        addLog(S, `⚔️ ${actor.username} (${aName}, শক্তি ${aRank}) বনাম ${target.username} (${tName}, শক্তি ${tRank})`);
+        const tied = aRank === tRank;
+        if (tied) addLog(S, 'টাই — কেউ বাদ নয়।');
+        S.lastCinematic = {
+          type: 'SWORDSMAN_DUEL',
+          attackerId: actor.playerId,
+          attackerName: actor.username,
+          targetId: target.playerId,
+          targetName: target.username,
+          attackerCardCode: attackerCard?.code || null,
+          targetCardCode: targetCard?.code || null,
+          attackerRank: aRank,
+          targetRank: tRank,
+          tied,
+          t: Date.now(),
+        };
+        if (!tied) {
+          eliminate(S, aRank < tRank ? actor.playerId : target.playerId, {
+            byPlayerId: aRank < tRank ? target.playerId : actor.playerId,
+            cardCode: 'SWORDSMAN',
+            reason: 'SWORDSMAN_DUEL',
+          });
+        }
         finishTurn(S);
         return { ok: true };
       }
@@ -301,9 +353,9 @@ const Engine = (() => {
       case 'SAILOR': {
         if (!target) { finishTurn(S); return { ok: true }; }
         [actor.hand[0], target.hand[0]] = [target.hand[0], actor.hand[0]];
-        const aAfter = CARD_DB[actor.hand[0]?.code]?.en || '?';
-        const tAfter = CARD_DB[target.hand[0]?.code]?.en || '?';
-        addLog(S, `🔄 ${actor.username} swapped with ${target.username} — now ${actor.username}: ${aAfter}, ${target.username}: ${tAfter}`);
+        const aAfter = CARD_DB[actor.hand[0]?.code]?.name || '?';
+        const tAfter = CARD_DB[target.hand[0]?.code]?.name || '?';
+        addLog(S, `🔄 ${actor.username} ${target.username}-এর সাথে বদল করেছেন — এখন ${actor.username}: ${aAfter}, ${target.username}: ${tAfter}`);
         for (const pid of [actor.playerId, target.playerId]) {
           const pp = getPlayer(S, pid);
           if (pp.hand[0]?.code === 'PIRATE') {
@@ -323,7 +375,7 @@ const Engine = (() => {
   };
 
   const actPickGuard = (S, action) => {
-    if (S.phase !== PHASES.NEEDS_GUARD) return { error: 'Bad phase.' };
+    if (S.phase !== PHASES.NEEDS_GUARD) return { error: 'ভুল পর্যায়।' };
     const actor  = S.players[S.turnIndex];
     const target = getPlayer(S, S.pending.targetId);
     if (!target?.isAlive || !target.hand[0]) {
@@ -333,49 +385,49 @@ const Engine = (() => {
     }
     const hit = target.hand[0].code === action.code;
     if (hit) {
-      addLog(S, `🎯 ${actor.username} অনুমান করেছেন ${CARD_DB[action.code].en} — সঠিক! ${target.username} বাদ!`);
+      addLog(S, `🎯 ${actor.username} অনুমান করেছেন ${CARD_DB[action.code].name} — সঠিক! ${target.username} বাদ!`);
       eliminate(S, target.playerId, {
         byPlayerId: actor.playerId,
         cardCode: action.code,
         reason: 'GUARD_GUESS',
       });
     } else {
-      addLog(S, `❌ ${actor.username} অনুমান করেছেন ${CARD_DB[action.code].en} — ভুল!`);
+      addLog(S, `❌ ${actor.username} অনুমান করেছেন ${CARD_DB[action.code].name} — ভুল!`);
     }
     finishTurn(S);
     return { ok: true };
   };
 
   const actPickMerchant = (S, action) => {
-    if (S.phase !== PHASES.NEEDS_MERCHANT) return { error: 'Bad phase.' };
+    if (S.phase !== PHASES.NEEDS_MERCHANT) return { error: 'ভুল পর্যায়।' };
     const p = S.players[S.turnIndex];
     const kept = p.hand[action.idx];
-    if (!kept) return { error: 'Invalid selection.' };
+    if (!kept) return { error: 'অবৈধ নির্বাচন।' };
     const rest = p.hand.filter((_, i) => i !== action.idx);
     p.hand = [kept];
     rest.forEach(c => S.deck.unshift(c));
-    addLog(S, `${p.username} রেখেছেন ${CARD_DB[kept.code].en}, ${rest.length}টি ডেকে ফেরত।`);
+    addLog(S, `${p.username} রেখেছেন ${CARD_DB[kept.code].name}, ${rest.length}টি ডেকে ফেরত।`);
     finishTurn(S);
     return { ok: true };
   };
 
   const actClosePeek = S => {
-    if (S.phase !== PHASES.PEEKING) return { error: 'Bad phase.' };
+    if (S.phase !== PHASES.PEEKING) return { error: 'ভুল পর্যায়।' };
     const actor = S.players[S.turnIndex];
     const pending = S.pending;
     if (pending?.peekedCard && pending.targetId) {
       const target = getPlayer(S, pending.targetId);
       const def = CARD_DB[pending.peekedCard.code];
-      addLog(S, `✓ ${actor.username} finished checking ${target?.username || '?'}: ${def?.en || pending.peekedCard.code}`);
+      addLog(S, `✓ ${actor.username} ${target?.username || '?'} দেখা শেষ করেছেন: ${def?.name || pending.peekedCard.code}`);
     }
     finishTurn(S);
     return { ok: true };
   };
 
   const actStartGame = S => {
-    if (S.phase !== PHASES.LOBBY) return { error: 'Already started.' };
+    if (S.phase !== PHASES.LOBBY) return { error: 'ইতিমধ্যে শুরু হয়েছে।' };
     const occupied = S.players.filter(p => p.username);
-    if (occupied.length < 2) return { error: 'Need at least 2 players.' };
+    if (occupied.length < 2) return { error: 'কমপক্ষে ২ জন খেলোয়াড় দরকার।' };
     // Compact to occupied seats only
     S.players = occupied;
     S.players.forEach((p, i) => { p.playerId = 'p' + i; });
@@ -388,7 +440,7 @@ const Engine = (() => {
   };
 
   const actNextRound = S => {
-    if (S.phase !== PHASES.ROUND_OVER) return { error: 'Bad phase.' };
+    if (S.phase !== PHASES.ROUND_OVER) return { error: 'ভুল পর্যায়।' };
     S.roundNum++;
     const winners = S.roundResults?.winners || [];
     const firstId = winners[0];
@@ -402,7 +454,7 @@ const Engine = (() => {
   };
 
   const actPlayAgain = S => {
-    if (S.phase !== PHASES.MATCH_OVER) return { error: 'Bad phase.' };
+    if (S.phase !== PHASES.MATCH_OVER) return { error: 'ভুল পর্যায়।' };
     S.players.forEach(p => { p.tokens = 0; });
     S.roundNum = 1;
     S.matchWinnerId = null;
@@ -417,7 +469,7 @@ const Engine = (() => {
   const actJoin = (S, action) => {
     // Already seated → silent resume (handles refresh & reconnect)
     if (S.players.find(p => p.clientId === action.clientId)) return { ok: true };
-    if (S.phase !== PHASES.LOBBY) return { error: 'Game in progress.' };
+    if (S.phase !== PHASES.LOBBY) return { error: 'খেলা চলছে।' };
     // Fill empty seat first
     const empty = S.players.findIndex(p => !p.clientId && !p.isAI && !p.username);
     if (empty >= 0) {
@@ -429,7 +481,7 @@ const Engine = (() => {
       };
       return { ok: true };
     }
-    if (S.players.length >= 6) return { error: 'Room full.' };
+    if (S.players.length >= 6) return { error: 'রুম পূর্ণ।' };
     S.players.push({
       playerId: 'p' + S.players.length,
       username: action.username,
@@ -455,8 +507,8 @@ const Engine = (() => {
   };
 
   const actAddAI = (S, action) => {
-    if (S.phase !== PHASES.LOBBY) return { error: 'Already started.' };
-    if (S.players.length >= 6) return { error: 'Room full.' };
+    if (S.phase !== PHASES.LOBBY) return { error: 'ইতিমধ্যে শুরু হয়েছে।' };
+    if (S.players.length >= 6) return { error: 'রুম পূর্ণ।' };
     const aiNames = ['Bot Blackbeard', 'Bot Anne', 'Bot Calico', 'Bot Morgan', 'Bot Drake'];
     const used = new Set(S.players.map(p => p.username));
     const name = aiNames.find(n => !used.has(n)) || ('Bot ' + S.players.length);
@@ -473,7 +525,7 @@ const Engine = (() => {
   };
 
   const actRemoveSeat = (S, action) => {
-    if (S.phase !== PHASES.LOBBY) return { error: 'Already started.' };
+    if (S.phase !== PHASES.LOBBY) return { error: 'ইতিমধ্যে শুরু হয়েছে।' };
     S.players = S.players.filter((_, i) => i !== action.seatIdx);
     S.players.forEach((p, i) => { p.playerId = 'p' + i; });
     return { ok: true };
@@ -520,6 +572,8 @@ const Engine = (() => {
         lastPlayedCard: null,
         lastPlayedBy:   null,
         lastDeathNotice: null,
+        deathNotices: [],
+        lastCinematic: null,
         lastEvent:  null,
         updatedAt:  Date.now(),
       };
@@ -527,19 +581,19 @@ const Engine = (() => {
 
     applyAction(state, action, actorClientId) {
       const handler = HANDLERS[action.type];
-      if (!handler) return { error: 'Unknown action: ' + action.type };
+      if (!handler) return { error: 'অজানা কাজ: ' + action.type };
       // Authorization: certain actions are host-only
       const HOST_ONLY = new Set(['ADD_AI', 'REMOVE_SEAT', 'START_GAME', 'NEXT_ROUND', 'PLAY_AGAIN']);
       if (HOST_ONLY.has(action.type) && actorClientId !== state.hostId) {
-        return { error: 'Host only.' };
+        return { error: 'শুধু হোস্ট।' };
       }
       // Turn-only: actor must own the current-turn seat
       const TURN_ONLY = new Set(['PLAY_CARD', 'PICK_TARGET', 'PICK_GUARD', 'PICK_MERCHANT', 'CLOSE_PEEK']);
       if (TURN_ONLY.has(action.type)) {
         const cur = state.players[state.turnIndex];
-        if (!cur) return { error: 'No current player.' };
+        if (!cur) return { error: 'বর্তমান খেলোয়াড় নেই।' };
         const isSeatOwner = cur.clientId === actorClientId || (cur.isAI && state.hostId === actorClientId);
-        if (!isSeatOwner) return { error: 'Not your turn.' };
+        if (!isSeatOwner) return { error: 'আপনার টার্ন নয়।' };
       }
       const res = handler(state, action);
       if (!res.error) state.updatedAt = Date.now();

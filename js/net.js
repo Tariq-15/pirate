@@ -168,7 +168,7 @@ const Net = (() => {
         // 23505 = unique violation → try a fresh code
         if (error.code !== '23505') throw error;
       }
-      throw new Error('Could not allocate a room code, please retry.');
+      throw new Error('রুম কোড তৈরি করা যায়নি, আবার চেষ্টা করুন।');
     },
 
     // Player joins existing room
@@ -178,7 +178,7 @@ const Net = (() => {
       code = normalizeRoomCode(code);
       if (!code) throw new Error('৪ সংখ্যার রুম কোড লিখুন।');
       const row = await fetchRoom(code);
-      if (!row) throw new Error('Room not found: ' + code);
+      if (!row) throw new Error('রুম পাওয়া যায়নি: ' + code);
       isHost = row.host_id === clientId;
       roomCode = code;
       state = row.state;
