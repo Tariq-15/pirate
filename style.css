@@ -3,8 +3,9 @@
 
 /* ── Design tokens ──────────────────────────────────────────────────────────── */
 :root {
-  --bg:          #080c14;
-  --bg2:         #0d1220;
+  --bg:          #1b1110;
+  --bg2:         #241816;
+  --bg-card:     #221513;
   --surface:     rgba(255,255,255,0.04);
   --surface2:    rgba(255,255,255,0.07);
   --gold:        #c8a43c;
@@ -56,9 +57,9 @@ body::before {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 70% 50% at 15% 90%, rgba(0,70,140,.15) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 40% at 85% 10%, rgba(0,40,100,.18) 0%, transparent 70%),
-    linear-gradient(170deg, #080c14 0%, #0b1120 55%, #060a10 100%);
+    radial-gradient(ellipse 70% 50% at 15% 90%, rgba(120,50,20,.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 85% 10%, rgba(80,30,15,.14) 0%, transparent 70%),
+    linear-gradient(170deg, #1b1110 0%, #1f1412 55%, #150e0d 100%);
 }
 
 /* ── Screen system ─────────────────────────────────────────────────────────── */
@@ -105,16 +106,27 @@ body::before {
 
 /* ══════════════════════════════════════════════════════════ LOBBY ══════════ */
 .lobby-wrap {
-  margin: auto; max-width: 420px;
+  margin: auto;
+  max-width: 420px;
+  width: 100%;
   padding: 2.5rem 1.5rem 3rem;
-  display: flex; flex-direction: column; gap: 2rem; align-items: stretch;
-  position: relative; z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
 }
-.lobby-header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+.lobby-hero-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
 .lobby-emblem {
   position: relative;
   width: min(100%, 300px);
-  margin-bottom: 0.2rem;
 }
 .lobby-hero-img {
   display: block;
@@ -124,6 +136,36 @@ body::before {
   object-position: center;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 28px rgba(200, 164, 60, 0.15);
+}
+@media (min-width: 900px) {
+  .lobby-wrap {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    max-width: min(1100px, 94vw);
+    gap: 2.5rem;
+    padding: 2.5rem 2rem 3rem;
+  }
+  .lobby-hero-panel {
+    flex: 1.15;
+    min-width: 0;
+    justify-content: center;
+  }
+  .lobby-emblem {
+    width: 100%;
+    max-width: 520px;
+  }
+  .lobby-hero-img {
+    width: 100%;
+    max-height: min(72vh, 640px);
+    object-fit: contain;
+  }
+  .lobby-card {
+    flex: 0.85;
+    min-width: 320px;
+    max-width: 400px;
+    align-self: center;
+  }
 }
 
 .title-bn {
@@ -198,7 +240,7 @@ body::before {
 
 /* ── Players bar ──────────────────────────────────────────────────────────── */
 .players-bar {
-  background: rgba(6,10,22,0.97);
+  background: rgba(27,17,16,0.97);
   border-bottom: 1px solid rgba(200,164,60,0.15);
   padding: 0.42rem 0.75rem 0.48rem;
   flex-shrink: 0; text-align: center;
@@ -276,7 +318,7 @@ body::before {
 .dumped-row:hover { background: rgba(255,255,255,0.04); }
 .dumped-thumb {
   width: 26px; height: 26px; border-radius: 3px;
-  background: #080e1a;
+  background: var(--bg-card);
   border: 1px solid rgba(200,164,60,0.28); flex-shrink: 0;
 }
 .dumped-name {
@@ -312,7 +354,7 @@ body::before {
 .deck-stack { position: relative; width: 66px; height: 66px; }
 .deck-backside {
   width: 66px; height: 66px; border-radius: 9px;
-  background: #080e1a;
+  background: var(--bg-card);
   border: 2px solid var(--gold);
   box-shadow: 3px 3px 0 rgba(0,0,0,0.65), 5px 5px 0 rgba(0,0,0,0.35),
               0 0 20px rgba(200,164,60,0.28);
@@ -337,7 +379,7 @@ body::before {
 }
 .burn-fd-img {
   width: 40px; height: 40px; border-radius: 7px;
-  background: #080e1a;
+  background: var(--bg-card);
   border: 1.5px solid rgba(200,164,60,0.3); display: block;
   transition: opacity 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
@@ -390,7 +432,7 @@ body::before {
 .burn-card-wrap { position: relative; flex-shrink: 0; }
 .burn-card-face {
   width: 36px; height: 36px; border-radius: 5px;
-  background: #080e1a;
+  background: var(--bg-card);
   border: 1.5px solid rgba(200,120,0,0.5); display: block;
 }
 .burn-card-rank-badge {
@@ -414,7 +456,7 @@ body::before {
 /* MY HAND */
 .hand-section {
   flex-shrink: 0;
-  background: rgba(6,10,22,0.95);
+  background: rgba(27,17,16,0.95);
   border-top: 2px solid var(--gold);
   position: relative; overflow: hidden;
   padding-bottom: 0.5rem;
@@ -459,7 +501,7 @@ body::before {
 .card {
   width: clamp(130px, 40vw, 170px);
   flex-shrink: 0; display: flex; flex-direction: column;
-  background: linear-gradient(165deg, #1a2240 0%, #0d1128 100%);
+  background: linear-gradient(165deg, #2a1c18 0%, #1b1110 100%);
   border: 2px solid var(--gold);
   border-radius: 14px; overflow: hidden;
   box-shadow: 0 0 22px rgba(200,164,60,0.3), 0 8px 28px rgba(0,0,0,0.8);
@@ -469,7 +511,7 @@ body::before {
 .card-img-wrap {
   position: relative; width: 100%;
   aspect-ratio: 1 / 1;
-  overflow: hidden; background: #080e1a;
+  overflow: hidden; background: var(--bg-card);
 }
 .card-img-wrap img {
   width: 100%; height: 100%; display: block;
@@ -530,7 +572,7 @@ body::before {
 /* Flying card (JS-created element) */
 .fly-card {
   position: fixed; border-radius: 10px; z-index: 9000;
-  background: #080e1a;
+  background: var(--bg-card);
   pointer-events: none; border: 2px solid var(--gold-bright);
   box-shadow: 0 0 32px rgba(200,164,60,0.75), 0 10px 28px rgba(0,0,0,0.85);
   will-change: transform, opacity;
@@ -591,7 +633,7 @@ body::before {
   touch-action: manipulation;
 }
 .target-btn:hover { background: rgba(200,164,60,0.12); border-color: var(--gold); transform: scale(1.05); }
-.target-avatar { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--gold); background: #080e1a; }
+.target-avatar { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--gold); background: var(--bg-card); }
 
 .guard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 0.5rem; }
 .guard-btn {
@@ -603,7 +645,7 @@ body::before {
   touch-action: manipulation;
 }
 .guard-btn:hover { background: rgba(200,164,60,0.14); border-color: var(--gold); transform: scale(1.06); }
-.guard-btn img { width: 48px; height: 48px; border-radius: 5px; background: #080e1a; }
+.guard-btn img { width: 48px; height: 48px; border-radius: 5px; background: var(--bg-card); }
 .guard-rank { font-family: var(--font-en); font-size: 0.68rem; color: var(--gold); font-weight: 600; }
 
 .merchant-cards { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
@@ -615,7 +657,7 @@ body::before {
 .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.7rem; }
 .guide-card { background: var(--surface); border: 1px solid var(--gold-dim); border-radius: var(--radius-sm); overflow: hidden; display: flex; flex-direction: column; transition: border-color 0.15s, transform 0.15s; }
 .guide-card:hover { border-color: rgba(200,164,60,0.55); transform: translateY(-2px); }
-.guide-img-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #080e1a; }
+.guide-img-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: var(--bg-card); }
 .guide-img-wrap img { width: 100%; height: 100%; display: block; }
 .guide-rank-badge { position: absolute; top: 5px; right: 5px; background: rgba(8,12,8,0.85); border: 1px solid var(--gold); color: var(--gold-bright); font-family: var(--font-en); font-weight: 700; font-size: 0.7rem; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .guide-card-meta { display: flex; justify-content: space-between; align-items: center; padding: 0.38rem 0.5rem 0; }
@@ -939,7 +981,7 @@ body::before {
 .play-column {
   border: 1px solid rgba(200,164,60,0.18);
   border-radius: 14px;
-  background: rgba(6,10,22,0.92);
+  background: rgba(27,17,16,0.92);
   min-height: 0;
 }
 
