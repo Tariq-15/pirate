@@ -1,6 +1,6 @@
 // Seven Seas game scene — wired to the real engine state
 
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
 // Compute total copies per sea ID from the engine's CARD_DB
 function buildTotalCopies() {
