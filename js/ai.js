@@ -1,23 +1,32 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // AI — simple heuristic player. Runs on the HOST only (host owns state).
-// Strategy:
-//   • Never play Captain unless forced (mustPlayCaptain) — Captain is high value.
-//   • Never play Pirate voluntarily (it eliminates you). If forced to choose
-//     between Pirate and something else, play the something else.
-//   • If forced to play Pirate (only card left? Captain rule excludes it), do it.
-//   • Otherwise play the LOWER-rank card to keep the stronger card in hand
-//     (classic Love Letter style heuristic).
-//   • Targets: random valid target.
-//   • Guard guess: random non-Guard code.
-//   • Merchant keep: highest-rank non-Pirate card.
-//   • Cannoneer: target self only if forced; otherwise random opponent.
 // ─────────────────────────────────────────────────────────────────────────────
 const AI = (() => {
-  const THINK_MS = 700; // pause so humans can see what just happened
+  const DELAY_DRAW_MS = 1000;
+  const DELAY_SHOW_PLAY_MS = 1000;
+  const DELAY_TASK_MS = 1000;
+  const DELAY_PEEK_MS = 1000;
 
   let scheduled = false;
 
   const randomOf = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  const aiDelay = S => {
+    const cur = S.players[S.turnIndex];
+    if (!cur?.isAI) return 700;
+    switch (S.phase) {
+      case Engine.PHASES.TURN_PLAY:
+        return DELAY_DRAW_MS;
+      case Engine.PHASES.NEEDS_TARGET:
+      case Engine.PHASES.NEEDS_GUARD:
+      case Engine.PHASES.NEEDS_MERCHANT:
+        return DELAY_SHOW_PLAY_MS + DELAY_TASK_MS;
+      case Engine.PHASES.PEEKING:
+        return DELAY_PEEK_MS;
+      default:
+        return 700;
+    }
+  };
 
   const pickCardIdx = p => {
     const hand = p.hand;
@@ -25,17 +34,14 @@ const AI = (() => {
       const i = hand.findIndex(c => c.code === 'CAPTAIN');
       return i >= 0 ? i : 0;
     }
-    // Avoid Captain (keep it) and Pirate (kills you)
     const candidates = hand
       .map((c, i) => ({ c, i }))
       .filter(({ c }) => c.code !== 'CAPTAIN' && c.code !== 'PIRATE');
     if (candidates.length === 0) {
-      // All cards are Captain or Pirate — prefer Captain over Pirate
       const cap = hand.findIndex(c => c.code === 'CAPTAIN');
       if (cap >= 0) return cap;
       return 0;
     }
-    // Lower-rank first → keep the strong card
     candidates.sort((a, b) => a.c.rank - b.c.rank);
     return candidates[0].i;
   };
@@ -61,14 +67,12 @@ const AI = (() => {
     let bestIdx = 0;
     let bestRank = -1;
     p.hand.forEach((c, i) => {
-      // Skip Pirate (suicide)
       if (c.code === 'PIRATE') return;
       if (c.rank > bestRank) { bestRank = c.rank; bestIdx = i; }
     });
     return bestIdx;
   };
 
-  // Inspect state; if it's an AI seat's turn, schedule the next action.
   const maybeAct = (state, submit) => {
     if (!state) return;
     if (scheduled) return;
@@ -80,37 +84,32 @@ const AI = (() => {
     if (!cur || !cur.isAI) return;
 
     scheduled = true;
+    const delay = aiDelay(state);
     setTimeout(() => {
       scheduled = false;
-      // Re-read latest state from Net
       const S = Net.getState();
       if (!S) return;
       const c = S.players[S.turnIndex];
       if (!c || !c.isAI) return;
 
       switch (S.phase) {
-        case Engine.PHASES.TURN_PLAY: {
+        case Engine.PHASES.TURN_PLAY:
           submit({ type: 'PLAY_CARD', cardIdx: pickCardIdx(c) });
           break;
-        }
-        case Engine.PHASES.NEEDS_TARGET: {
+        case Engine.PHASES.NEEDS_TARGET:
           submit({ type: 'PICK_TARGET', targetId: pickTarget(S) });
           break;
-        }
-        case Engine.PHASES.NEEDS_GUARD: {
+        case Engine.PHASES.NEEDS_GUARD:
           submit({ type: 'PICK_GUARD', code: pickGuardGuess() });
           break;
-        }
-        case Engine.PHASES.NEEDS_MERCHANT: {
+        case Engine.PHASES.NEEDS_MERCHANT:
           submit({ type: 'PICK_MERCHANT', idx: pickMerchantKeep(S) });
           break;
-        }
-        case Engine.PHASES.PEEKING: {
+        case Engine.PHASES.PEEKING:
           submit({ type: 'CLOSE_PEEK' });
           break;
-        }
       }
-    }, THINK_MS);
+    }, delay);
   };
 
   return { maybeAct };

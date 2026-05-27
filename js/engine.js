@@ -94,8 +94,6 @@ const Engine = (() => {
       p.mustPlayCaptain = true;
     }
     addLog(S, `${p.username}-এর টার্ন — ডেক: ${S.deck.length}।`);
-    S.lastPlayedCard = null;
-    S.lastPlayedBy = null;
     S.phase = PHASES.TURN_PLAY;
     S.pending = null;
     S.lastEvent = { type: 'TURN_START', seat: S.turnIndex, t: Date.now() };

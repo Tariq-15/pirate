@@ -1,7 +1,11 @@
 const UI = (() => {
   let isAnimating = false;
-  let didAnimateThisTurn = null;  // 'p0' etc — track per-turn so we animate draw once
-  let renderedPlayedUid  = null;  // last card uid rendered in submit zone (animate slam once)
+  let didAnimateThisTurn = null;
+  let renderedPlayedUid  = null;
+  let lastAnimatedPlayKey = null;
+  let lastProcessedEventKey = null;
+  let queuedState = null;
+  let isProcessingState = false;
   let wasAliveLastFrame = true;
   let settingsReady = false;
 
@@ -71,44 +75,103 @@ const UI = (() => {
   }
 
   // ── Animations ────────────────────────────────────────────────────────────────
-  function animateDraw(onComplete) {
-    const deckEl = $('deck-visual');
-    const handEl = $('hand-cards');
-    if (!deckEl || !handEl) { onComplete?.(); return; }
-    const deckRect = deckEl.getBoundingClientRect();
-    const handRect = handEl.getBoundingClientRect();
-    if (deckRect.width === 0 || handRect.width === 0) { onComplete?.(); return; }
+  function flyBetween(fromEl, toEl, { src, duration = 480, fadeOut = true, cardSize = null, onComplete } = {}) {
+    if (!fromEl || !toEl) { onComplete?.(); return; }
+    const from = fromEl.getBoundingClientRect();
+    const to = toEl.getBoundingClientRect();
+    if (from.width === 0 || to.width === 0) { onComplete?.(); return; }
 
     isAnimating = true;
     const fly = document.createElement('img');
-    fly.src = CARD_BACK;
+    fly.src = src || CARD_BACK;
     fly.alt = '';
     fly.setAttribute('aria-hidden', 'true');
     fly.className = 'fly-card';
+    fly.style.objectFit = 'cover';
+    fly.style.objectPosition = 'top center';
 
-    const startX = deckRect.left;
-    const startY = deckRect.top;
+    const w = cardSize || Math.max(Math.min(from.width, 88), 48);
+    const h = cardSize ? cardSize : Math.max(w * 1.15, 68);
+    const startX = from.left + from.width / 2 - w / 2;
+    const startY = from.top + from.height / 2 - h / 2;
     Object.assign(fly.style, {
       left: startX + 'px', top: startY + 'px',
-      width: deckRect.width + 'px', height: deckRect.height + 'px',
+      width: w + 'px', height: h + 'px',
       opacity: '1', transform: 'scale(1) rotateZ(0deg)', transition: 'none',
     });
     document.body.appendChild(fly);
 
-    const destX = handRect.left + handRect.width / 2 - deckRect.width / 2;
-    const destY = handRect.top + 16;
+    const destX = to.left + to.width / 2 - w / 2;
+    const destY = to.top + to.height / 2 - h / 2;
     const dx = destX - startX;
     const dy = destY - startY;
 
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      fly.style.transition =
-        'transform 0.44s cubic-bezier(0.25,0.46,0.45,0.94), ' +
-        'opacity 0.18s ease 0.3s';
-      fly.style.transform  = `translate(${dx}px, ${dy}px) scale(0.86) rotateZ(-6deg)`;
-      fly.style.opacity    = '0';
+      if (fadeOut) {
+        fly.style.transition =
+          `transform ${duration}ms cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.2s ease ${duration - 120}ms`;
+        fly.style.transform = `translate(${dx}px, ${dy}px) scale(0.92) rotateZ(-4deg)`;
+        fly.style.opacity = '0';
+      } else {
+        fly.style.transition =
+          `transform ${duration}ms cubic-bezier(0.22,0.61,0.36,1), box-shadow ${duration}ms ease`;
+        fly.style.transform = `translate(${dx}px, ${dy}px) scale(1.08) rotateZ(0deg)`;
+        fly.style.boxShadow = '0 0 40px rgba(200,164,60,0.75), 0 12px 32px rgba(0,0,0,0.85)';
+      }
     }));
 
-    setTimeout(() => { fly.remove(); isAnimating = false; onComplete?.(); }, 530);
+    setTimeout(() => {
+      fly.remove();
+      isAnimating = false;
+      onComplete?.();
+    }, duration + 80);
+  }
+
+  function getPlayerBoxEl(playerId) {
+    if (!playerId) return null;
+    return document.querySelector(`.player-box[data-player-id="${playerId}"]`);
+  }
+
+  function animateDrawToPlayer(playerId, onComplete) {
+    flyBetween($('deck-visual'), getPlayerBoxEl(playerId), {
+      src: CARD_BACK,
+      duration: 520,
+      onComplete,
+    });
+  }
+
+  function getPlayTargetEl() {
+    return $('deck-visual') || $('center-stage');
+  }
+
+  function animatePlayToCenter(card, playerId, onComplete) {
+    const def = CARD_DB[card?.code];
+    const src = def?.img || CARD_BACK;
+    const fromEl = getPlayerBoxEl(playerId);
+    const toEl = getPlayTargetEl();
+
+    const startFly = () => {
+      flyBetween(fromEl, toEl, {
+        src,
+        duration: 780,
+        fadeOut: false,
+        cardSize: 96,
+        onComplete,
+      });
+    };
+
+    if (!fromEl || !toEl) { onComplete?.(); return; }
+
+    const preload = new Image();
+    preload.onload = startFly;
+    preload.onerror = startFly;
+    preload.src = src;
+  }
+
+  function eventKey(state) {
+    const e = state.lastEvent;
+    if (!e) return null;
+    return `${state.roundNum}:${e.type}:${e.t}:${e.card?.uid ?? ''}:${e.by ?? ''}:${e.seat ?? ''}`;
   }
 
   // ── Renderers ────────────────────────────────────────────────────────────────
@@ -128,11 +191,12 @@ const UI = (() => {
     const aliveCount = state.players.filter(p => p.isAlive).length;
     const inPlay = state.deck.length + aliveCount + (state.burnFaceDown ? 1 : 0);
     const inPlayEl = $('status-in-play-count');
-    const turnEl = $('status-turn');
+    const deckCountEl = $('status-deck-count');
+    const roundTopEl = $('round-badge-top');
     const lastPlayedEl = $('status-last-played');
-    const playerListEl = $('status-player-list');
     if (inPlayEl) inPlayEl.textContent = String(inPlay);
-    if (turnEl) turnEl.textContent = cur ? cur.username : '—';
+    if (deckCountEl) deckCountEl.textContent = String(state.deck.length);
+    if (roundTopEl) roundTopEl.textContent = 'R' + (state.roundNum || 1);
     if (lastPlayedEl) {
       if (state.lastPlayedCard && state.lastPlayedBy) {
         const who = state.players.find(p => p.playerId === state.lastPlayedBy)?.username || 'Unknown';
@@ -142,18 +206,8 @@ const UI = (() => {
         lastPlayedEl.textContent = '—';
       }
     }
-    if (playerListEl) {
-      playerListEl.innerHTML = state.players.map(p => {
-        const isCur = p === cur;
-        const icon = p.isProtected ? '🛡️' : (p.isAlive ? (p.isAI ? '🤖' : '🏴‍☠️') : '💀');
-        const cls = ['status-player-row', isCur ? 'is-current' : '', !p.isAlive ? 'is-dead' : ''].filter(Boolean).join(' ');
-        return `<div class="${cls}">
-          <span class="status-player-icon">${icon}</span>
-          <span class="status-player-name">${p.username}</span>
-          <span class="status-player-tokens">${p.tokens}</span>
-        </div>`;
-      }).join('');
-    }
+
+    renderPlayerStrip(state);
 
     const counts = {};
     state.players.forEach(p => p.discards.forEach(c => { counts[c.code] = (counts[c.code] || 0) + 1; }));
@@ -173,6 +227,27 @@ const UI = (() => {
             </div>`;
           }).join('');
     }
+  }
+
+  function renderPlayerStrip(state) {
+    const strip = $('player-strip');
+    if (!strip) return;
+    const cur = state.players[state.turnIndex];
+    strip.innerHTML = state.players.map(p => {
+      const isCur = p === cur;
+      const icon = p.isProtected ? '🛡️' : (p.isAlive ? (p.isAI ? '🤖' : '🏴‍☠️') : '💀');
+      const cls = [
+        'player-box',
+        isCur ? 'is-current' : '',
+        !p.isAlive ? 'is-dead' : '',
+        p.clientId === Net.getClientId() ? 'is-me' : '',
+      ].filter(Boolean).join(' ');
+      return `<div class="${cls}" data-player-id="${p.playerId}">
+        <span class="player-box-icon">${icon}</span>
+        <span class="player-box-name">${p.username}</span>
+        <span class="player-box-tokens">${p.tokens}</span>
+      </div>`;
+    }).join('');
   }
 
   function renderSubmitZone(card) {
@@ -260,9 +335,6 @@ const UI = (() => {
     const deckImg = $('deck-img');
     if (cnt)     cnt.textContent = state.deck.length;
     if (deckImg) deckImg.classList.toggle('deck-empty', state.deck.length === 0);
-
-    const fdImg = $('burn-facedown-img');
-    if (fdImg) fdImg.classList.toggle('used', !state.burnFaceDown);
 
     const fuRow = $('burn-face-up');
     if (fuRow) {
@@ -548,22 +620,39 @@ const UI = (() => {
   // ── Master state-update handler ──────────────────────────────────────────────
   function onState(state) {
     if (!state) return;
+    queuedState = state;
+    if (isProcessingState) return;
+    processQueuedState();
+  }
+
+  function processQueuedState() {
+    if (!queuedState) return;
+    const state = queuedState;
+    queuedState = null;
+    isProcessingState = true;
     initSettingsUI();
 
-    // Route to the right screen based on phase
+    const done = () => {
+      isProcessingState = false;
+      if (queuedState) processQueuedState();
+    };
+
     switch (state.phase) {
       case Engine.PHASES.LOBBY:
         renderRoom(state);
         showScreen('room');
+        done();
         return;
 
       case Engine.PHASES.ROUND_OVER:
         renderTopBar(state);
         renderRoundOver(state);
+        done();
         return;
 
       case Engine.PHASES.MATCH_OVER:
         renderMatchOver(state);
+        done();
         return;
 
       default: {
@@ -573,24 +662,59 @@ const UI = (() => {
         renderDeck(state);
         renderLog(state);
         renderDeathPrompt(state);
-        renderCenterStage(state);
 
-        // Animate the draw when a new turn begins, once per turn
-        const turnKey = state.roundNum + ':' + state.turnIndex + ':' + state.players[state.turnIndex]?.playerId;
-        const isFreshTurn = (state.phase === Engine.PHASES.TURN_PLAY) && (didAnimateThisTurn !== turnKey);
-        if (isFreshTurn) {
-          didAnimateThisTurn = turnKey;
-          const handEl = $('hand-cards');
-          if (handEl) handEl.innerHTML = '';
-          animateDraw(() => {
-            renderHand(state);
-            updateWaitingOverlay(state);
-            renderPhaseModals(state);
-          });
-        } else {
+        const evKey = eventKey(state);
+        const playedUid = state.lastPlayedCard?.uid ?? null;
+        const playedKey = playedUid == null ? null : `${state.roundNum}:${playedUid}`;
+        const isNewPlay = !!playedKey && playedKey !== lastAnimatedPlayKey;
+
+        const finishFrame = () => {
           renderHand(state);
           updateWaitingOverlay(state);
           renderPhaseModals(state);
+        };
+
+        if (isNewPlay) {
+          lastAnimatedPlayKey = playedKey;
+          lastProcessedEventKey = evKey;
+          const playedById = state.lastPlayedBy
+            || state.lastEvent?.by
+            || state.players[state.turnIndex]?.playerId;
+          renderCenterStage({ ...state, lastPlayedCard: null });
+          requestAnimationFrame(() => {
+            const playerBox = getPlayerBoxEl(playedById);
+            if (playerBox) playerBox.classList.add('is-playing');
+            animatePlayToCenter(state.lastPlayedCard, playedById, () => {
+              if (playerBox) playerBox.classList.remove('is-playing');
+              renderCenterStage(state);
+              finishFrame();
+              done();
+            });
+          });
+          return;
+        }
+
+        renderCenterStage(state);
+
+        const turnKey = state.roundNum + ':' + state.turnIndex + ':' + state.players[state.turnIndex]?.playerId;
+        const isFreshTurn = (state.phase === Engine.PHASES.TURN_PLAY)
+          && (state.lastEvent?.type === 'TURN_START')
+          && (didAnimateThisTurn !== turnKey);
+
+        if (isFreshTurn) {
+          didAnimateThisTurn = turnKey;
+          if (evKey) lastProcessedEventKey = evKey;
+          const curId = state.players[state.turnIndex]?.playerId;
+          const playerBox = getPlayerBoxEl(curId);
+          if (playerBox) playerBox.classList.add('is-drawing');
+          animateDrawToPlayer(curId, () => {
+            if (playerBox) playerBox.classList.remove('is-drawing');
+            finishFrame();
+            done();
+          });
+        } else {
+          finishFrame();
+          done();
         }
         return;
       }

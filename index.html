@@ -17,11 +17,8 @@
   <div class="lobby-wrap">
     <header class="lobby-header">
       <div class="lobby-emblem">
-        <img src="illustration/pirate.png" alt="Pirate" class="lobby-hero-img">
-        <div class="lobby-emblem-ring"></div>
+        <img src="illustration/home-image.png" alt="জলদস্যু — Pirate Card Game" class="lobby-hero-img">
       </div>
-      <h1 class="title-bn">জলদস্যু</h1>
-      <p class="title-en">PIRATE CARD GAME</p>
       <p class="lobby-tagline">২–৬ জন খেলোয়াড় • অনলাইন রুম-ভিত্তিক</p>
     </header>
 
@@ -77,53 +74,55 @@
 <div id="screen-game" class="screen">
   <div class="game-layout">
     <div class="game-main">
-      <div class="status-panel">
-        <h3 class="panel-title">Status</h3>
-        <div class="status-kv">
-          <span>Cards In Play</span>
-          <strong id="status-in-play-count">0</strong>
+      <aside class="side-panel side-panel-left">
+        <div class="log-panel">
+          <div class="log-title">Round Log</div>
+          <ul id="log-list" class="log-list"></ul>
         </div>
-        <div class="status-kv">
-          <span>Turn</span>
-          <strong id="status-turn">—</strong>
-        </div>
-        <div class="status-kv">
-          <span>Last Played</span>
-          <strong id="status-last-played">—</strong>
-        </div>
-
-        <div class="status-block">
-          <div class="status-block-title">Players</div>
-          <div id="status-player-list" class="status-player-list"></div>
-        </div>
-
         <div class="status-block">
           <div class="status-block-title">Played / Dumped</div>
           <div id="lp-discards" class="dumped-list"></div>
         </div>
-      </div>
+      </aside>
 
       <div class="play-column">
-        <div class="log-panel">
-          <div class="log-title">Round Log</div>
-          <ul id="log-list" class="log-list"></ul>
+        <div class="middle-top">
+          <div class="status-panel status-panel-compact">
+            <h3 class="panel-title">Status</h3>
+            <div class="status-kv-row">
+              <div class="status-kv">
+                <span>Cards In Play</span>
+                <strong id="status-in-play-count">0</strong>
+              </div>
+              <div class="status-kv">
+                <span>Round</span>
+                <strong id="round-badge-top">R1</strong>
+              </div>
+              <div class="status-kv">
+                <span>Deck</span>
+                <strong id="status-deck-count">0</strong>
+              </div>
+            </div>
+            <div class="status-kv">
+              <span>Last Played</span>
+              <strong id="status-last-played">—</strong>
+            </div>
+          </div>
+
+          <div id="player-strip" class="player-strip"></div>
         </div>
 
         <div class="center-area">
           <div class="center-stage" id="center-stage">
             <div class="deck-widget" id="deck-visual">
               <div class="deck-stack">
-                <img src="Image/card-backside.jpeg" id="deck-img" class="deck-backside" alt="Deck">
+                <img src="illustration/card-backside.png" id="deck-img" class="deck-backside" alt="Deck">
                 <div class="deck-badge" id="deck-count">0</div>
               </div>
             </div>
             <div class="submit-zone" id="submit-zone">
-              <div id="submit-content"><span class="submit-empty">—</span></div>
+              <div id="submit-content"></div>
             </div>
-          </div>
-          <div class="burn-fd-widget">
-            <img src="Image/card-backside.jpeg" id="burn-facedown-img" class="burn-fd-img" alt="">
-            <span class="deck-label-sm">গোপন</span>
           </div>
         </div>
 
@@ -135,24 +134,26 @@
         <div id="burn-face-up" class="burn-faceup-row"></div>
       </div>
 
-      <div class="right-panel" id="hand-section">
-        <div id="captain-hint" class="captain-hint" style="display:none">
-          ⚠️ আপনাকে অবশ্যই <strong>ক্যাপ্টেন</strong> খেলতে হবে!
+      <aside class="side-panel side-panel-right">
+        <div class="right-panel" id="hand-section">
+          <div id="captain-hint" class="captain-hint" style="display:none">
+            ⚠️ আপনাকে অবশ্যই <strong>ক্যাপ্টেন</strong> খেলতে হবে!
+          </div>
+          <div class="right-panel-head">
+            <div id="hand-label" class="hand-label">আপনার কার্ড</div>
+            <label class="details-toggle">
+              <input id="toggle-card-details" type="checkbox">
+              <span>Show details</span>
+            </label>
+          </div>
+          <div id="death-prompt" class="death-prompt hidden"></div>
+          <div id="hand-cards" class="hand-cards"></div>
+          <div id="waiting-overlay" class="waiting-overlay" style="display:none">
+            <div class="waiting-spinner"></div>
+            <div id="waiting-text">অপেক্ষা করছেন…</div>
+          </div>
         </div>
-        <div class="right-panel-head">
-          <div id="hand-label" class="hand-label">আপনার কার্ড</div>
-          <label class="details-toggle">
-            <input id="toggle-card-details" type="checkbox">
-            <span>Show details</span>
-          </label>
-        </div>
-        <div id="death-prompt" class="death-prompt hidden"></div>
-        <div id="hand-cards" class="hand-cards"></div>
-        <div id="waiting-overlay" class="waiting-overlay" style="display:none">
-          <div class="waiting-spinner"></div>
-          <div id="waiting-text">অপেক্ষা করছেন…</div>
-        </div>
-      </div>
+      </aside>
     </div>
   </div>
 </div>

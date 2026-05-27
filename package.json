@@ -1,0 +1,8 @@
+{
+  "name": "pirate-card-game",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/sync-env.js",
+    "env:sync": "node scripts/sync-env.js"
+  }
+}

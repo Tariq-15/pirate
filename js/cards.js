@@ -1,5 +1,5 @@
 const ILL = 'illustration';
-const CARD_BACK = 'Image/card-backside.jpeg';
+const CARD_BACK = 'illustration/card-backside.png';
 const COIN = 'Image/coin.png';
 
 const CARD_DB = {
