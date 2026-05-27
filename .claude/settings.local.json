@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(node --input-type=module)",
+      "Bash(claude mcp *)",
+      "PowerShell(claude mcp add --scope project --transport http supabase \"https://mcp.supabase.com/mcp?project_ref=yoaajumphmteyllvwcyw\")"
+    ]
+  }
+}

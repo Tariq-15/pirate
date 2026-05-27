@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>জলদস্যু — Pirate Card Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@300;400;500;600;700&family=Cinzel:wght@400;700;900&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════ LOBBY ══ -->
+<!-- Start screen: enter guest name, then choose Create / Join -->
+<div id="screen-lobby" class="screen active">
+  <div class="lobby-wrap">
+    <header class="lobby-header">
+      <div class="lobby-emblem">
+        <img src="illustration/pirate.png" alt="Pirate" class="lobby-hero-img">
+        <div class="lobby-emblem-ring"></div>
+      </div>
+      <h1 class="title-bn">জলদস্যু</h1>
+      <p class="title-en">PIRATE CARD GAME</p>
+      <p class="lobby-tagline">২–৬ জন খেলোয়াড় • অনলাইন রুম-ভিত্তিক</p>
+    </header>
+
+    <div class="lobby-card">
+      <h2 class="lobby-card-title">আপনার নাম</h2>
+      <input id="guest-name-input" class="guest-name-input" type="text"
+             maxlength="16" placeholder="অতিথি নাম…">
+
+      <div class="lobby-action-row">
+        <button id="btn-create-room" class="btn-primary btn-block btn-xl">⚓ নতুন রুম তৈরি করুন</button>
+      </div>
+
+      <div class="lobby-divider"><span>অথবা</span></div>
+
+      <div class="join-row">
+        <input id="join-code-input" class="join-code-input" type="text"
+               maxlength="4" placeholder="ABCD" autocomplete="off">
+        <button id="btn-join-room" class="btn-ghost btn-join">যোগ দিন</button>
+      </div>
+
+      <p id="lobby-error" class="lobby-error"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ ROOM ══ -->
+<!-- After creating/joining — shows seats, share link, AI button, start -->
+<div id="screen-room" class="screen">
+  <div class="room-wrap">
+    <header class="room-header">
+      <div class="room-code-box">
+        <span class="room-code-label">রুম কোড</span>
+        <span id="room-code-display" class="room-code-value">— — — —</span>
+        <button id="btn-copy-code" class="btn-copy" title="কপি করুন">📋</button>
+      </div>
+      <button id="btn-copy-link" class="btn-ghost btn-copy-link">🔗 শেয়ার লিঙ্ক কপি</button>
+    </header>
+
+    <h2 class="room-section-title">খেলোয়াড়রা <span id="room-player-count" class="room-count">0/6</span></h2>
+    <div id="room-seats" class="room-seats"></div>
+
+    <div class="room-actions">
+      <button id="btn-add-ai" class="btn-ghost">🤖 AI খেলোয়াড় যোগ করুন</button>
+      <button id="btn-start-game" class="btn-primary btn-xl">⚓ যাত্রা শুরু</button>
+    </div>
+
+    <p id="room-hint" class="room-hint">শেয়ার লিঙ্ক বন্ধুদের পাঠান, বা AI যোগ করুন।</p>
+    <button id="btn-leave-room" class="btn-ghost btn-leave">↩ রুম থেকে বের হন</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ GAME ══ -->
+<div id="screen-game" class="screen">
+  <div class="game-layout">
+    <div class="game-main">
+      <div class="status-panel">
+        <h3 class="panel-title">Status</h3>
+        <div class="status-kv">
+          <span>Cards In Play</span>
+          <strong id="status-in-play-count">0</strong>
+        </div>
+        <div class="status-kv">
+          <span>Turn</span>
+          <strong id="status-turn">—</strong>
+        </div>
+        <div class="status-kv">
+          <span>Last Played</span>
+          <strong id="status-last-played">—</strong>
+        </div>
+
+        <div class="status-block">
+          <div class="status-block-title">Players</div>
+          <div id="status-player-list" class="status-player-list"></div>
+        </div>
+
+        <div class="status-block">
+          <div class="status-block-title">Played / Dumped</div>
+          <div id="lp-discards" class="dumped-list"></div>
+        </div>
+      </div>
+
+      <div class="play-column">
+        <div class="log-panel">
+          <div class="log-title">Round Log</div>
+          <ul id="log-list" class="log-list"></ul>
+        </div>
+
+        <div class="center-deck-row">
+          <div class="deck-widget" id="deck-visual">
+            <div class="deck-stack">
+              <img src="Image/card-backside.jpeg" id="deck-img" class="deck-backside" alt="Deck">
+              <div class="deck-badge" id="deck-count">0</div>
+            </div>
+          </div>
+          <div class="burn-fd-widget">
+            <img src="Image/card-backside.jpeg" id="burn-facedown-img" class="burn-fd-img" alt="">
+            <span class="deck-label-sm">গোপন</span>
+          </div>
+        </div>
+
+        <div class="center-meta">
+          <div class="round-badge" id="round-badge">R1</div>
+          <div class="turn-pill" id="current-player-label">—</div>
+        </div>
+
+        <div class="submit-zone" id="submit-zone">
+          <div id="submit-content"><span class="submit-empty">—</span></div>
+        </div>
+
+        <div id="burn-face-up" class="burn-faceup-row"></div>
+      </div>
+
+      <div class="right-panel" id="hand-section">
+        <div id="captain-hint" class="captain-hint" style="display:none">
+          ⚠️ আপনাকে অবশ্যই <strong>ক্যাপ্টেন</strong> খেলতে হবে!
+        </div>
+        <div class="right-panel-head">
+          <div id="hand-label" class="hand-label">আপনার কার্ড</div>
+          <label class="details-toggle">
+            <input id="toggle-card-details" type="checkbox">
+            <span>Show details</span>
+          </label>
+        </div>
+        <div id="death-prompt" class="death-prompt hidden"></div>
+        <div id="hand-cards" class="hand-cards"></div>
+        <div id="waiting-overlay" class="waiting-overlay" style="display:none">
+          <div class="waiting-spinner"></div>
+          <div id="waiting-text">অপেক্ষা করছেন…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ ROUND OVER ══ -->
+<div id="screen-round-over" class="screen">
+  <div class="result-wrap">
+    <h2 class="result-title">রাউন্ড শেষ!</h2>
+    <div class="result-reason" id="round-end-reason"></div>
+    <div class="result-winners" id="round-end-winners"></div>
+    <div id="round-rogue-bonus"></div>
+    <div class="score-table" id="round-scores"></div>
+    <p class="score-goal" id="round-goal"></p>
+    <button id="btn-next-round" class="btn-primary btn-xl">▶ পরের রাউন্ড</button>
+    <p id="round-host-hint" class="round-hint"></p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ MATCH OVER ══ -->
+<div id="screen-match-over" class="screen">
+  <div class="victory-wrap">
+    <div class="victory-trophy">🏆</div>
+    <h1 class="victory-title">জয়!</h1>
+    <div class="victory-winner" id="match-winner-name"></div>
+    <div class="score-table" id="final-scores"></div>
+    <button id="btn-play-again" class="btn-primary btn-xl">⚓ আবার খেলুন</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ TARGET MODAL ══ -->
+<div id="modal-target" class="modal hidden">
+  <div class="modal-box">
+    <h3 class="modal-title" id="target-title">একজন লক্ষ্য বেছে নিন</h3>
+    <div id="target-list" class="target-list"></div>
+    <button id="btn-cancel-target" class="btn-ghost" style="display:none">বাতিল করুন</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ GUARD MODAL ══ -->
+<div id="modal-guard" class="modal hidden">
+  <div class="modal-box">
+    <h3 class="modal-title">পাহারাদার — কার্ড অনুমান করুন</h3>
+    <p id="guard-target-name" class="modal-sub"></p>
+    <div id="guard-card-list" class="guard-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ MERCHANT MODAL ══ -->
+<div id="modal-merchant" class="modal hidden">
+  <div class="modal-box modal-wide">
+    <h3 class="modal-title">বণিক — ১টি কার্ড রাখুন</h3>
+    <p class="modal-sub">যে কার্ডটি রাখতে চান সেটিতে ট্যাপ করুন।</p>
+    <div id="merchant-cards" class="merchant-cards"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ PEEK MODAL ══ -->
+<div id="modal-peek" class="modal hidden">
+  <div class="modal-box">
+    <h3 class="modal-title">গোপনে দেখছেন — <span id="peek-player-name"></span>-এর কার্ড</h3>
+    <div id="peek-card" class="peek-card-wrap"></div>
+    <button id="btn-close-peek" class="btn-primary">ঠিক আছে!</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ GUIDE MODAL ══ -->
+<div id="modal-guide" class="modal hidden">
+  <div class="modal-box modal-guide">
+    <div class="guide-header">
+      <h3 class="modal-title">কার্ড রেফারেন্স গাইড</h3>
+      <button id="btn-close-guide" class="btn-close-x">✕</button>
+    </div>
+    <p class="guide-subtitle">শক্তি অনুযায়ী সাজানো (উপরে বেশি শক্তিশালী)</p>
+    <div id="guide-grid" class="guide-grid"></div>
+  </div>
+</div>
+
+<!-- Floating guide button -->
+<button id="btn-guide" class="btn-guide-float" title="Card Reference Guide">
+  <span class="guide-icon">📖</span>
+  <span class="guide-label">Guide</span>
+</button>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<script src="js/config.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/net.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
