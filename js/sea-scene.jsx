@@ -206,16 +206,14 @@ function SeaSeat({ player, isActive, position, target = 4, dock }) {
         }}>
           <div style={{
             width: 62, height: 62, borderRadius: '50%',
-            background: `radial-gradient(circle at 35% 30%, ${SEA.sky} 0%, ${SEA.midSea} 70%, ${SEA.ocean} 100%)`,
             border: `2px solid ${SEA.ink}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: BN,
-            fontSize: 28, fontWeight: 700, color: TABLE_INK,
             position: 'relative', overflow: 'hidden',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: SEA.midSea,
           }}>
-            {isAI ? '🤖' : initial}
-            <svg style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }} viewBox="0 0 60 20">
-              <path d="M 0 10 Q 15 6 30 10 T 60 10 L 60 20 L 0 20 Z" fill={SEA.midSea} opacity="0.5" />
+            <PlayerAvatar playerId={id} name={name} isAI={isAI} isMe={isYou} size={62} />
+            <svg style={{ position: 'absolute', bottom: 0, left: 0, right: 0, pointerEvents: 'none' }} viewBox="0 0 60 20">
+              <path d="M 0 10 Q 15 6 30 10 T 60 10 L 60 20 L 0 20 Z" fill={SEA.midSea} opacity="0.4" />
             </svg>
           </div>
 
@@ -364,32 +362,12 @@ function DeckTable() {
 }
 
 // ─── Center play area ──────────────────────────────────────────────────────────
-function SeaCenterPlay({ lastPlayed, lastPlayer, deckCount, discardCount, discardTop, playSlam }) {
+function SeaCenterPlay({ lastPlayed, lastPlayer, deckCount, playSlam }) {
   return (
     <div style={{
       position: 'absolute', left: 0, right: 0, top: 248,
       display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: 36,
     }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          fontFamily: '"Anek Bangla", sans-serif', fontSize: 11, letterSpacing: 2,
-          color: TABLE_INK, textTransform: 'uppercase', fontWeight: 600,
-        }}>ফেলা · {discardCount}</div>
-        <div style={{ position: 'relative', width: 120, height: 170 }}>
-          {discardTop[2] && <SeaCard id={discardTop[2]} w={100} tilt={-7} style={{ position: 'absolute', left: 0, top: 8, opacity: 0.65 }} />}
-          {discardTop[1] && <SeaCard id={discardTop[1]} w={100} tilt={4}  style={{ position: 'absolute', left: 6, top: 4, opacity: 0.85 }} />}
-          {discardTop[0] && <SeaCard id={discardTop[0]} w={100} tilt={-2} style={{ position: 'absolute', left: 10 }} />}
-          {discardTop.length === 0 && (
-            <div style={{
-              width: 100, height: 142, borderRadius: 10,
-              border: `2px dashed ${SEA.rope}`, opacity: 0.4,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: '"Anek Bangla", sans-serif', fontSize: 11, color: TABLE_INK_SOFT,
-            }}>খালি</div>
-          )}
-        </div>
-      </div>
-
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, position: 'relative' }}>
         <div style={{
           position: 'absolute', width: 340, height: 340, top: -34, left: '50%', transform: 'translateX(-50%)',
@@ -406,8 +384,8 @@ function SeaCenterPlay({ lastPlayed, lastPlayer, deckCount, discardCount, discar
           style={{ position: 'relative' }}
         >
           {lastPlayed
-            ? <SeaCard id={lastPlayed} w={144} highlight />
-            : <div style={{ width: 144, height: 205, borderRadius: 12, border: `2px dashed ${SEA.rope}`, opacity: 0.3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BN, fontSize: 13, color: TABLE_INK_SOFT }}>—</div>
+            ? <SeaCard id={lastPlayed} w={100} tilt={-2} />
+            : <div style={{ width: 100, height: 142, borderRadius: 10, border: `2px dashed ${SEA.rope}`, opacity: 0.4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BN, fontSize: 11, color: TABLE_INK_SOFT }}>খালি</div>
           }
         </div>
         {lastPlayer && (
@@ -428,10 +406,6 @@ function SeaCenterPlay({ lastPlayed, lastPlayer, deckCount, discardCount, discar
           <SeaCardBack w={100} tilt={1}  style={{ position: 'absolute', left: 8,  top: 4 }} />
           <SeaCardBack w={100} tilt={-1} style={{ position: 'absolute', left: 4 }} />
         </div>
-        <div style={{
-          fontFamily: '"Anek Bangla", sans-serif', fontSize: 13, fontWeight: 500, fontStyle: 'italic',
-          color: TABLE_INK_SOFT,
-        }}>+ ১টি লুকানো</div>
       </div>
     </div>
   );
@@ -695,13 +669,68 @@ function SeaBanner({ round, target, activeName }) {
   );
 }
 
-// ─── Wave footer ───────────────────────────────────────────────────────────────
-function WaveFooter() {
+// ─── Wooden floor ──────────────────────────────────────────────────────────────
+function WoodFloor() {
+  const W = 1440, H = 900, PLANK_H = 88, GAP = 2, ROW_H = PLANK_H + GAP;
+  const rows = Math.ceil(H / ROW_H); // 10 rows
+  // Five subtly different dark-walnut shades to break monotony
+  const shades = ['#1A0D06', '#1C0F07', '#190C05', '#1D1008', '#1B0D06'];
+  // Staggered joints: even rows offset from odd rows by half a plank (~120px)
+  const jointsEven = [240, 480, 720, 960, 1200];
+  const jointsOdd  = [120, 360, 600, 840, 1080, 1320];
+
   return (
-    <svg viewBox="0 0 1440 60" preserveAspectRatio="none"
-      style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: 36, opacity: 0.4, pointerEvents: 'none' }}>
-      <path d="M 0 30 Q 60 14 120 30 T 240 30 T 360 30 T 480 30 T 600 30 T 720 30 T 840 30 T 960 30 T 1080 30 T 1200 30 T 1320 30 T 1440 30 L 1440 60 L 0 60 Z" fill={SEA.teal} />
-      <path d="M 0 40 Q 50 26 100 40 T 200 40 T 300 40 T 400 40 T 500 40 T 600 40 T 700 40 T 800 40 T 900 40 T 1000 40 T 1100 40 T 1200 40 T 1300 40 T 1440 40 L 1440 60 L 0 60 Z" fill={SEA.midSea} opacity="0.8" />
+    <svg
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', display: 'block' }}
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="xMidYMid slice"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <radialGradient id="wfVig" cx="50%" cy="50%" r="72%">
+          <stop offset="0%"   stopColor="transparent" />
+          <stop offset="100%" stopColor="rgba(0,0,0,0.55)" />
+        </radialGradient>
+        {/* Soft top shadow so the ceiling reads as darker */}
+        <linearGradient id="wfTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"  stopColor="rgba(0,0,0,0.55)" />
+          <stop offset="18%" stopColor="transparent" />
+        </linearGradient>
+      </defs>
+
+      {/* Plank rows */}
+      {Array.from({ length: rows }, (_, row) => {
+        const y    = row * ROW_H;
+        const fill = shades[row % shades.length];
+        const joints = row % 2 === 0 ? jointsEven : jointsOdd;
+        return (
+          <g key={row}>
+            {/* Base plank colour */}
+            <rect x={0} y={y} width={W} height={PLANK_H} fill={fill} />
+            {/* Subtle mid-stripe highlight (wood catches light across the centre) */}
+            <rect x={0} y={y + Math.round(PLANK_H * 0.32)} width={W} height={Math.round(PLANK_H * 0.36)} fill="rgba(255,255,255,0.022)" />
+            {/* Fine horizontal grain lines */}
+            {[0.12, 0.28, 0.48, 0.64, 0.80].map((t, gi) => (
+              <line key={gi}
+                x1={0} y1={y + Math.round(PLANK_H * t)}
+                x2={W} y2={y + Math.round(PLANK_H * t)}
+                stroke="rgba(0,0,0,0.13)" strokeWidth={0.6}
+              />
+            ))}
+            {/* Vertical end-joints (2 px, near-black) */}
+            {joints.map((jx, ji) => (
+              <rect key={ji} x={jx - 1} y={y} width={2} height={PLANK_H} fill="#030100" opacity="0.9" />
+            ))}
+            {/* Horizontal gap between rows */}
+            <rect x={0} y={y + PLANK_H} width={W} height={GAP} fill="#050100" />
+          </g>
+        );
+      })}
+
+      {/* Edge vignette — darkens corners, gives depth */}
+      <rect x={0} y={0} width={W} height={H} fill="url(#wfVig)" />
+      {/* Top-shadow so it looks like a room ceiling above */}
+      <rect x={0} y={0} width={W} height={H} fill="url(#wfTop)" />
     </svg>
   );
 }
@@ -848,33 +877,21 @@ function SeaGameScene({ state, onPlayCard, cardPresentation, onCardPresentationD
     if (id) discardCounts[id] = (discardCounts[id] || 0) + 1;
   });
 
-  const discardTotal = Object.values(discardCounts).reduce((a, b) => a + b, 0);
-
-  // Top 3 discard cards for pile display
-  const allDiscarded = [];
-  state.players.forEach(p => p.discards.forEach(c => allDiscarded.push(CODE_TO_SEA_ID[c.code] || 'pirate')));
-  (state.burnFaceUp || []).forEach(c => allDiscarded.push(CODE_TO_SEA_ID[c.code] || 'pirate'));
-  const discardTop = allDiscarded.slice(-3).reverse();
-
   const logEntries = state.log || [];
 
   const meAlive = me?.isAlive;
   const mustPlayCaptain = me?.mustPlayCaptain || false;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0E2B3E' }}>
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0402' }}>
       <div ref={stageRef} style={{ transformOrigin: 'center center' }}>
         <div style={{
           width: 1440, height: 900, position: 'relative', overflow: 'hidden',
-          background: `linear-gradient(180deg, #2D5878 0%, #1B3A56 40%, #0E2B3E 90%)`,
+          background: '#130804',
           fontFamily: BN,
         }}>
-          {/* Stars */}
-          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: 200, pointerEvents: 'none' }}>
-            {[80, 240, 380, 510, 690, 880, 1040, 1210, 1370].map((x, i) => (
-              <circle key={i} cx={x} cy={20 + (i * 13) % 80} r={i % 3 === 0 ? 1.5 : 1} fill={SEA.cream} opacity="0.7" />
-            ))}
-          </svg>
+          {/* Wooden floor */}
+          <WoodFloor />
 
           <SeaBanner round={state.roundNum || 1} target={target} activeName={currentPlayer?.username || ''} />
           <DeckTable />
@@ -882,8 +899,6 @@ function SeaGameScene({ state, onPlayCard, cardPresentation, onCardPresentationD
             lastPlayed={visiblePlayed}
             lastPlayer={lastPlayedByName}
             deckCount={state.deck.length}
-            discardCount={discardTotal}
-            discardTop={discardTop}
             playSlam={playSlam}
           />
 
@@ -958,7 +973,6 @@ function SeaGameScene({ state, onPlayCard, cardPresentation, onCardPresentationD
 
           <DiscardTally counts={discardCounts} />
           <SeaLog entries={logEntries} />
-          <WaveFooter />
 
           <style>{`
             @keyframes seaPulse {
@@ -1126,6 +1140,7 @@ function SeaAppRoot() {
             initial: (p.username || '?')[0].toUpperCase(),
             protected: p.isProtected,
             eliminated: !p.isAlive,
+            isAI: !!p.isAI,
           }));
         const actionMap = {
           swordsman: 'লড়াই কর', cannoneer: 'গুলি কর',
@@ -1154,6 +1169,18 @@ function SeaAppRoot() {
           options={guardOptions}
           mode="guess"
           onPick={(seaId) => Net.submit({ type: 'PICK_GUARD', code: SEA_ID_TO_CODE[seaId] || seaId.toUpperCase() })}
+        />
+      );
+    } else if (phase === Engine.PHASES.PEEKING) {
+      const pending = engineState.pending;
+      const target = engineState.players.find(p => p.playerId === pending?.targetId);
+      const cardSeaId = pending?.peekedCard?.code ? (CODE_TO_SEA_ID[pending.peekedCard.code] || 'deckhand') : 'deckhand';
+      activePopup = (
+        <PeekPopup
+          key={phaseKey}
+          cardId={cardSeaId}
+          targetName={target?.username || '?'}
+          onClose={() => Net.submit({ type: 'CLOSE_PEEK' })}
         />
       );
     } else if (phase === Engine.PHASES.NEEDS_MERCHANT && me) {

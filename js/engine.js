@@ -285,8 +285,7 @@ const Engine = (() => {
       case 'CREW': {
         if (!target?.hand[0]) { finishTurn(S); return { ok: true }; }
         const peeked = target.hand[0];
-        const peekDef = CARD_DB[peeked.code];
-        addLog(S, `👁️ ${actor.username} ${target.username}-এর কার্ড দেখেছেন: ${peekDef?.name || peeked.code}`);
+        addLog(S, `👁️ ${actor.username} ক্রু ব্যবহার করেছেন।`);
         S.phase = PHASES.PEEKING;
         S.pending = { card, targetId: target.playerId, peekedCard: { ...peeked } };
         return { ok: true };
@@ -406,7 +405,7 @@ const Engine = (() => {
     const rest = p.hand.filter((_, i) => i !== action.idx);
     p.hand = [kept];
     rest.forEach(c => S.deck.unshift(c));
-    addLog(S, `${p.username} রেখেছেন ${CARD_DB[kept.code].name}, ${rest.length}টি ডেকে ফেরত।`);
+    addLog(S, `🪙 ${p.username} বণিকের পছন্দ সম্পন্ন করেছেন।`);
     finishTurn(S);
     return { ok: true };
   };
@@ -415,11 +414,7 @@ const Engine = (() => {
     if (S.phase !== PHASES.PEEKING) return { error: 'ভুল পর্যায়।' };
     const actor = S.players[S.turnIndex];
     const pending = S.pending;
-    if (pending?.peekedCard && pending.targetId) {
-      const target = getPlayer(S, pending.targetId);
-      const def = CARD_DB[pending.peekedCard.code];
-      addLog(S, `✓ ${actor.username} ${target?.username || '?'} দেখা শেষ করেছেন: ${def?.name || pending.peekedCard.code}`);
-    }
+    if (pending?.peekedCard && pending.targetId) addLog(S, `✓ ${actor.username} দেখা শেষ করেছেন।`);
     finishTurn(S);
     return { ok: true };
   };

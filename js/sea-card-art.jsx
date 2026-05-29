@@ -312,4 +312,93 @@ function SeaCardBack({ w = 160, tilt = 0, style }) {
   );
 }
 
-Object.assign(window, { SEA, ROSTER, BY_ID, BY_EN, BN_NUM, SeaCard, SeaCardBack, CODE_TO_SEA_ID });
+// ─── Avatar illustration helpers ──────────────────────────────────────────────
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+function pickFrom(arr, n) { return arr[n % arr.length]; }
+
+const AVATAR_TOPS    = ['MisterT','Fonze','Full','Doug','Phantom','Turban','Pixie'];
+const AVATAR_SHIRTS  = ['Collared','Crew','Tee'];
+const AVATAR_EYES    = ['Smiling','Ellipse','Round'];
+const AVATAR_MOUTHS  = ['Laughing','Smile','Smirk','Surprised','Nervous','Pucker'];
+const AVATAR_BROWS   = ['Up','Down','EyelashesDown','EyelashesUp'];
+const AVATAR_EARS    = ['Attached','Detached'];
+const AVATAR_NOSES   = ['Round','Pointed','Curved'];
+const AVATAR_SKINS   = ['#AC6651','#D48B5A','#F3C498','#7E4E3C','#C68642','#8D5524','#FDDBB4'];
+const AVATAR_TOPS_C  = ['#1A1A2E','#6B3E26','#8B0000','#2C3E50','#4A235A','#1B4332','#D4A843'];
+const AVATAR_SHIRTS_C= ['#2D5878','#8B1A1A','#2E4D2E','#4A1942','#5C3317','#1A1A4A','#1A3A4A'];
+
+function avatarOptsFor(id, isAI) {
+  if (isAI) return {
+    top: 'Bald', shirt: 'Crew', eye: 'Ellipse', mouth: 'Nervous',
+    eyebrow: 'Up', ear: 'Attached', nose: 'Round',
+    color: { skinColor: '#8B9BB4', topColor: '#2D5878', shirtColor: '#4a90d9' },
+  };
+  const h = hashStr(id || 'guest');
+  return {
+    top:     pickFrom(AVATAR_TOPS,   h),
+    shirt:   pickFrom(AVATAR_SHIRTS, h >> 3),
+    eye:     pickFrom(AVATAR_EYES,   h >> 6),
+    mouth:   pickFrom(AVATAR_MOUTHS, h >> 9),
+    eyebrow: pickFrom(AVATAR_BROWS,  h >> 12),
+    ear:     pickFrom(AVATAR_EARS,   h >> 15),
+    nose:    pickFrom(AVATAR_NOSES,  h >> 18),
+    color: {
+      skinColor:  pickFrom(AVATAR_SKINS,    h >> 2),
+      topColor:   pickFrom(AVATAR_TOPS_C,   h >> 5),
+      shirtColor: pickFrom(AVATAR_SHIRTS_C, h >> 8),
+    },
+  };
+}
+
+function getMyAvatarOpts() {
+  try {
+    const s = localStorage.getItem('pirate.avatarOpts');
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+function PlayerAvatar({ playerId, name, isAI, isMe, size = 62 }) {
+  const svgStr = React.useMemo(() => {
+    if (typeof AvatarLib === 'undefined') return null;
+    try {
+      const saved = isMe ? getMyAvatarOpts() : null;
+      const base = avatarOptsFor(playerId || name, isAI);
+      const opts = saved ? {
+        ...base,
+        top:   saved.top   || base.top,
+        shirt: saved.shirt || base.shirt,
+        eye:   saved.eye   || base.eye,
+        mouth: saved.mouth || base.mouth,
+        color: {
+          skinColor:  saved.skinColor  || base.color.skinColor,
+          topColor:   saved.topColor   || base.color.topColor,
+          shirtColor: saved.shirtColor || base.color.shirtColor,
+        },
+      } : base;
+      return AvatarLib.Avatar({ size, ...opts });
+    } catch (e) { return null; }
+  }, [playerId, isAI, isMe, size]);
+
+  if (!svgStr) {
+    return (
+      <span style={{ fontSize: Math.round(size * 0.45), fontWeight: 700, fontFamily: '"Anek Bangla", sans-serif' }}>
+        {isAI ? '🤖' : (name || '?')[0].toUpperCase()}
+      </span>
+    );
+  }
+  return (
+    <div
+      style={{ width: size, height: size, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      dangerouslySetInnerHTML={{ __html: svgStr }}
+    />
+  );
+}
+
+Object.assign(window, { SEA, ROSTER, BY_ID, BY_EN, BN_NUM, SeaCard, SeaCardBack, CODE_TO_SEA_ID,
+  hashStr, pickFrom, AVATAR_TOPS, AVATAR_SHIRTS, AVATAR_EYES, AVATAR_MOUTHS, AVATAR_BROWS, AVATAR_EARS, AVATAR_NOSES,
+  AVATAR_SKINS, AVATAR_TOPS_C, AVATAR_SHIRTS_C,
+  avatarOptsFor, getMyAvatarOpts, PlayerAvatar });

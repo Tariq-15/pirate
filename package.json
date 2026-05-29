@@ -4,5 +4,8 @@
   "scripts": {
     "build": "node scripts/sync-env.js",
     "env:sync": "node scripts/sync-env.js"
+  },
+  "dependencies": {
+    "@opeepsfun/avatar-illustration-system": "^1.0.3"
   }
 }

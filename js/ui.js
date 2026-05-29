@@ -462,19 +462,8 @@ const UI = (() => {
     showModal('merchant');
   }
 
-  function showPeekModal(state) {
-    const pending = state.pending;
-    if (!pending?.peekedCard) return;
-    const target = state.players.find(p => p.playerId === pending.targetId);
-    const lbl  = $('peek-player-name');
-    const wrap = $('peek-card');
-    if (lbl) lbl.textContent = target?.username || '?';
-    if (wrap) wrap.innerHTML = cardHTML(pending.peekedCard);
-
-    $('btn-close-peek').onclick = () => {
-      Net.submit({ type: 'CLOSE_PEEK' });
-    };
-    showModal('peek');
+  function showPeekModal(_state) {
+    // Handled by the React PeekPopup in sea-scene.jsx
   }
 
   // ── Card click → submit PLAY_CARD ────────────────────────────────────────────
@@ -677,6 +666,84 @@ const UI = (() => {
 
   function showToast(_msg) { /* bottom toast removed */ }
 
+  // ── Avatar builder ────────────────────────────────────────────────────────────
+  function initAvatarBuilder() {
+    const TOPS   = ['MisterT','Fonze','Full','Doug','Phantom','Turban','Pixie'];
+    const TOPS_C = ['#1A1A2E','#6B3E26','#8B0000','#2C3E50','#4A235A','#1B4332','#D4A843'];
+    const TOP_NAMES = { MisterT:'মিস্টার টি', Fonze:'ফনজে', Full:'পূর্ণ চুল', Doug:'ডগ', Phantom:'ফ্যান্টম', Turban:'পাগড়ি', Pixie:'পিক্সি' };
+    const EYES   = ['Smiling','Ellipse','Round'];
+    const EYE_NAMES = { Smiling:'হাসি চোখ', Ellipse:'ডিম্বাকার', Round:'গোলাকার' };
+    const MOUTHS = ['Laughing','Smile','Smirk','Surprised','Nervous','Pucker'];
+    const MOUTH_NAMES = { Laughing:'খোলা হাসি', Smile:'মুচকি', Smirk:'কুটিল', Surprised:'অবাক', Nervous:'নার্ভাস', Pucker:'চুমু' };
+    const SHIRTS   = ['Collared','Crew','Tee'];
+    const SHIRTS_C = ['#2D5878','#8B1A1A','#2E4D2E'];
+    const SHIRT_NAMES = { Collared:'কলার শার্ট', Crew:'ক্রু নেক', Tee:'টি-শার্ট' };
+    const SKINS  = ['#AC6651','#D48B5A','#F3C498','#7E4E3C','#C68642','#8D5524','#FDDBB4'];
+
+    let opts = {};
+    try { const s = localStorage.getItem('pirate.avatarOpts'); opts = s ? JSON.parse(s) : {}; } catch {}
+    if (!opts.top)        opts.top        = 'Fonze';
+    if (!opts.eye)        opts.eye        = 'Round';
+    if (!opts.mouth)      opts.mouth      = 'Smile';
+    if (!opts.shirt)      opts.shirt      = 'Crew';
+    if (!opts.skinColor)  opts.skinColor  = '#AC6651';
+    if (!opts.topColor)   opts.topColor   = '#1A1A2E';
+    if (!opts.shirtColor) opts.shirtColor = '#2D5878';
+
+    function save() { try { localStorage.setItem('pirate.avatarOpts', JSON.stringify(opts)); } catch {} }
+
+    function updatePreview() {
+      if (typeof AvatarLib === 'undefined') return;
+      let svg = '';
+      try {
+        svg = AvatarLib.Avatar({
+          size: 96, top: opts.top, shirt: opts.shirt, eye: opts.eye,
+          mouth: opts.mouth, eyebrow: 'Up', ear: 'Attached', nose: 'Round',
+          color: { skinColor: opts.skinColor, topColor: opts.topColor, shirtColor: opts.shirtColor },
+        });
+      } catch(e) {}
+      document.querySelectorAll('.avatar-preview-ring').forEach(el => { el.innerHTML = svg; });
+    }
+
+    function updateLabels() {
+      const setField = (field, text, isSwatch) => {
+        document.querySelectorAll(`[data-avatar-field="${field}"]`).forEach(el => {
+          if (isSwatch) el.style.background = text;
+          else el.textContent = text;
+        });
+      };
+      setField('top',   TOP_NAMES[opts.top]    || opts.top);
+      setField('eye',   EYE_NAMES[opts.eye]    || opts.eye);
+      setField('mouth', MOUTH_NAMES[opts.mouth] || opts.mouth);
+      setField('shirt', SHIRT_NAMES[opts.shirt] || opts.shirt);
+      setField('skin',  opts.skinColor, true);
+    }
+
+    function cycle(feature, dir) {
+      const wrap = (arr, i) => (i + arr.length) % arr.length;
+      switch (feature) {
+        case 'top': {
+          const i = wrap(TOPS, TOPS.indexOf(opts.top) + dir);
+          opts.top = TOPS[i]; opts.topColor = TOPS_C[i]; break;
+        }
+        case 'eye':   { opts.eye   = EYES[wrap(EYES,   EYES.indexOf(opts.eye)   + dir)]; break; }
+        case 'mouth': { opts.mouth = MOUTHS[wrap(MOUTHS, MOUTHS.indexOf(opts.mouth) + dir)]; break; }
+        case 'shirt': {
+          const i = wrap(SHIRTS, SHIRTS.indexOf(opts.shirt) + dir);
+          opts.shirt = SHIRTS[i]; opts.shirtColor = SHIRTS_C[i]; break;
+        }
+        case 'skin':  { opts.skinColor = SKINS[wrap(SKINS, SKINS.indexOf(opts.skinColor) + dir)]; break; }
+      }
+      save(); updatePreview(); updateLabels();
+    }
+
+    document.querySelectorAll('.avatar-ctrl-btn').forEach(btn => {
+      btn.addEventListener('click', () => cycle(btn.dataset.feature, +btn.dataset.dir));
+    });
+
+    save(); updatePreview(); updateLabels();
+  }
+
   // ── Lobby (pre-room) ─────────────────────────────────────────────────────────
   function initLobby() {
     const nameInput = $('guest-name-input');
@@ -685,6 +752,8 @@ const UI = (() => {
 
     // Pre-fill name from localStorage
     nameInput.value = Net.getSavedUsername() || ('Guest ' + Math.floor(Math.random() * 1000));
+
+    initAvatarBuilder();
 
     const setErr = msg => { if (errEl) errEl.textContent = msg || ''; };
 

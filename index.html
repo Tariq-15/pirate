@@ -23,6 +23,47 @@
     </div>
 
     <div class="lobby-card">
+
+      <!-- Avatar Builder (lobby) -->
+      <div class="avatar-builder">
+        <div class="avatar-builder-left">
+          <div class="avatar-preview-ring"></div>
+          <span class="avatar-builder-label">আপনার অবতার</span>
+        </div>
+        <div class="avatar-builder-controls">
+          <div class="avatar-ctrl-row">
+            <span class="avatar-ctrl-label">চুল</span>
+            <button class="avatar-ctrl-btn" data-feature="top" data-dir="-1">◀</button>
+            <span class="avatar-ctrl-val" data-avatar-field="top"></span>
+            <button class="avatar-ctrl-btn" data-feature="top" data-dir="1">▶</button>
+          </div>
+          <div class="avatar-ctrl-row">
+            <span class="avatar-ctrl-label">ত্বক</span>
+            <button class="avatar-ctrl-btn" data-feature="skin" data-dir="-1">◀</button>
+            <span class="avatar-ctrl-swatch" data-avatar-field="skin"></span>
+            <button class="avatar-ctrl-btn" data-feature="skin" data-dir="1">▶</button>
+          </div>
+          <div class="avatar-ctrl-row">
+            <span class="avatar-ctrl-label">চোখ</span>
+            <button class="avatar-ctrl-btn" data-feature="eye" data-dir="-1">◀</button>
+            <span class="avatar-ctrl-val" data-avatar-field="eye"></span>
+            <button class="avatar-ctrl-btn" data-feature="eye" data-dir="1">▶</button>
+          </div>
+          <div class="avatar-ctrl-row">
+            <span class="avatar-ctrl-label">মুখ</span>
+            <button class="avatar-ctrl-btn" data-feature="mouth" data-dir="-1">◀</button>
+            <span class="avatar-ctrl-val" data-avatar-field="mouth"></span>
+            <button class="avatar-ctrl-btn" data-feature="mouth" data-dir="1">▶</button>
+          </div>
+          <div class="avatar-ctrl-row">
+            <span class="avatar-ctrl-label">পোশাক</span>
+            <button class="avatar-ctrl-btn" data-feature="shirt" data-dir="-1">◀</button>
+            <span class="avatar-ctrl-val" data-avatar-field="shirt"></span>
+            <button class="avatar-ctrl-btn" data-feature="shirt" data-dir="1">▶</button>
+          </div>
+        </div>
+      </div>
+
       <h2 class="lobby-card-title">আপনার নাম</h2>
       <input id="guest-name-input" class="guest-name-input" type="text"
              maxlength="16" placeholder="অতিথি নাম…">
@@ -67,6 +108,47 @@
     </div>
 
     <p id="room-hint" class="room-hint">শেয়ার লিঙ্ক বন্ধুদের পাঠান, বা এআই যোগ করুন।</p>
+
+    <!-- Avatar Builder (room) -->
+    <div class="avatar-builder room-avatar-builder">
+      <div class="avatar-builder-left">
+        <div class="avatar-preview-ring"></div>
+        <span class="avatar-builder-label">আপনার অবতার</span>
+      </div>
+      <div class="avatar-builder-controls">
+        <div class="avatar-ctrl-row">
+          <span class="avatar-ctrl-label">চুল</span>
+          <button class="avatar-ctrl-btn" data-feature="top" data-dir="-1">◀</button>
+          <span class="avatar-ctrl-val" data-avatar-field="top"></span>
+          <button class="avatar-ctrl-btn" data-feature="top" data-dir="1">▶</button>
+        </div>
+        <div class="avatar-ctrl-row">
+          <span class="avatar-ctrl-label">ত্বক</span>
+          <button class="avatar-ctrl-btn" data-feature="skin" data-dir="-1">◀</button>
+          <span class="avatar-ctrl-swatch" data-avatar-field="skin"></span>
+          <button class="avatar-ctrl-btn" data-feature="skin" data-dir="1">▶</button>
+        </div>
+        <div class="avatar-ctrl-row">
+          <span class="avatar-ctrl-label">চোখ</span>
+          <button class="avatar-ctrl-btn" data-feature="eye" data-dir="-1">◀</button>
+          <span class="avatar-ctrl-val" data-avatar-field="eye"></span>
+          <button class="avatar-ctrl-btn" data-feature="eye" data-dir="1">▶</button>
+        </div>
+        <div class="avatar-ctrl-row">
+          <span class="avatar-ctrl-label">মুখ</span>
+          <button class="avatar-ctrl-btn" data-feature="mouth" data-dir="-1">◀</button>
+          <span class="avatar-ctrl-val" data-avatar-field="mouth"></span>
+          <button class="avatar-ctrl-btn" data-feature="mouth" data-dir="1">▶</button>
+        </div>
+        <div class="avatar-ctrl-row">
+          <span class="avatar-ctrl-label">পোশাক</span>
+          <button class="avatar-ctrl-btn" data-feature="shirt" data-dir="-1">◀</button>
+          <span class="avatar-ctrl-val" data-avatar-field="shirt"></span>
+          <button class="avatar-ctrl-btn" data-feature="shirt" data-dir="1">▶</button>
+        </div>
+      </div>
+    </div>
+
     <button id="btn-leave-room" class="btn-ghost btn-leave">↩ রুম থেকে বের হন</button>
   </div>
 </div>
@@ -128,14 +210,6 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════ PEEK MODAL ══ -->
-<div id="modal-peek" class="modal hidden">
-  <div class="modal-box">
-    <h3 class="modal-title">গোপনে দেখছেন — <span id="peek-player-name"></span>-এর কার্ড</h3>
-    <div id="peek-card" class="peek-card-wrap"></div>
-    <button id="btn-close-peek" class="btn-primary">ঠিক আছে!</button>
-  </div>
-</div>
 
 <!-- ═══════════════════════════════════════════════ GUIDE MODAL ══ -->
 <div id="modal-guide" class="modal hidden">
@@ -154,6 +228,9 @@
   <span class="guide-icon">📖</span>
   <span class="guide-label">গাইড</span>
 </button>
+
+<!-- Avatar illustration system (bundled from @opeepsfun/avatar-illustration-system) -->
+<script src="js/avatar-lib.js"></script>
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

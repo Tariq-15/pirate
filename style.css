@@ -183,6 +183,56 @@ body::before {
   box-shadow: var(--shadow);
 }
 .lobby-card-title { font-family: var(--font-bn); font-size: 0.82rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── Avatar Builder ─────────────────────────────────────────────────────────── */
+.avatar-builder {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.8rem 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(200,164,60,0.22);
+  border-radius: var(--radius-sm);
+}
+.avatar-builder-left { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+.avatar-preview-ring {
+  width: 92px; height: 92px; border-radius: 50%;
+  border: 3px solid var(--gold);
+  overflow: hidden; background: #2E6B8E;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(200,164,60,0.28), 0 4px 12px rgba(0,0,0,0.5);
+}
+.avatar-builder-label {
+  font-family: var(--font-bn); font-size: 0.65rem;
+  color: var(--gold); letter-spacing: 0.05em;
+}
+.avatar-builder-controls { flex: 1; display: flex; flex-direction: column; gap: 0.38rem; min-width: 0; }
+.avatar-ctrl-row { display: flex; align-items: center; gap: 0.3rem; }
+.avatar-ctrl-label {
+  font-family: var(--font-bn); font-size: 0.68rem; color: var(--text2);
+  width: 34px; flex-shrink: 0;
+}
+.avatar-ctrl-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(200,164,60,0.22);
+  border-radius: 4px; color: var(--gold); font-size: 0.65rem;
+  width: 22px; height: 22px; cursor: pointer; padding: 0; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s;
+}
+.avatar-ctrl-btn:hover { background: rgba(200,164,60,0.18); }
+.avatar-ctrl-val {
+  flex: 1; text-align: center; font-family: var(--font-bn); font-size: 0.68rem;
+  color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
+.avatar-ctrl-swatch {
+  flex: 1; height: 20px; border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+}
+.room-avatar-builder {
+  margin-top: 0.5rem;
+  max-width: 480px;
+  width: 100%;
+  align-self: center;
+}
 .player-entries { display: flex; flex-direction: column; gap: 0.5rem; }
 .player-entry { display: flex; align-items: center; gap: 0.6rem; }
 .player-entry label { font-family: var(--font-en); font-size: 0.72rem; font-weight: 500; color: var(--text2); text-transform: uppercase; width: 56px; flex-shrink: 0; }

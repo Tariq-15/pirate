@@ -155,16 +155,20 @@ function PlayerPickerPopup({ cardName, players, onPick, action }) {
                 <div style={{
                   width: 72, height: 72, borderRadius: '50%',
                   background: `radial-gradient(circle at 30% 30%, ${SEA.gold} 0%, ${SEA.brass} 55%, ${SEA.brassDark} 100%)`,
-                  border: `2.5px solid ${SEA.ink}`,
+                  border: `2.5px solid ${isPicked ? SEA.gold : SEA.ink}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: isPicked ? `0 0 0 3px ${SEA.ocean}, 0 0 0 4.5px ${SEA.gold}` : 'none',
+                  transition: 'box-shadow 0.15s',
                 }}>
                   <div style={{
                     width: 56, height: 56, borderRadius: '50%',
-                    background: `radial-gradient(circle at 35% 30%, ${SEA.sky || '#7FB8C9'} 0%, ${SEA.midSea} 70%, ${SEA.ocean} 100%)`,
+                    background: SEA.midSea,
                     border: `2px solid ${SEA.ink}`,
+                    overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: '"Anek Bangla", sans-serif', fontSize: 24, fontWeight: 700, color: SEA.cream,
-                  }}>{p.initial}</div>
+                  }}>
+                    <PlayerAvatar playerId={p.id} name={p.name} isAI={!!p.isAI} size={56} />
+                  </div>
                 </div>
                 <div style={{ fontFamily: '"Anek Bangla", sans-serif', fontSize: 15, fontWeight: 700, color: SEA.ink, lineHeight: 1.1, textAlign: 'center' }}>
                   {p.name}
@@ -254,35 +258,78 @@ function CardPickerPopup({ title, subtitle, cardName, options, onPick, mode = 'p
             })}
           </div>
         ) : (
-          // Full cards — Guard guess (same layout as Merchant pick)
+          // Compact horizontal thumbnail chips — Guard guess
           <div style={{
-            display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap',
-            alignItems: 'flex-end', padding: '6px 0 4px', maxWidth: 820, margin: '0 auto',
+            display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap',
+            padding: '4px 0 8px',
           }}>
-            {options.map((id, i) => {
+            {options.map((id) => {
+              const card = BY_ID[id] || ROSTER[0];
               const isPicked = pickedId === id;
               return (
-                <div
+                <button
                   key={id}
                   onClick={() => setPickedId(id)}
                   style={{
+                    appearance: 'none',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    gap: 5, padding: '7px 5px 9px',
+                    width: 72, flexShrink: 0,
+                    background: isPicked ? `rgba(242,201,76,0.25)` : 'rgba(245,232,200,0.55)',
+                    border: `2.5px solid ${isPicked ? SEA.gold : SEA.woodDark}`,
+                    borderRadius: 10,
                     cursor: 'pointer',
-                    transform: isPicked ? 'translateY(-10px) rotate(0deg)' : `translateY(0) rotate(${(i % 3 - 1) * 2}deg)`,
-                    transition: 'transform 0.25s',
                     position: 'relative',
+                    transform: isPicked ? 'translateY(-6px) scale(1.04)' : 'none',
+                    boxShadow: isPicked
+                      ? `0 8px 20px rgba(242,201,76,0.45), 2px 2px 0 ${SEA.ink}`
+                      : `2px 2px 0 ${SEA.woodDark}`,
+                    transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s',
                   }}
                 >
-                  <SeaCard id={id} w={120} highlight={isPicked} />
+                  {/* Value badge */}
+                  <div style={{
+                    position: 'absolute', top: 4, left: 4,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: `radial-gradient(circle at 30% 30%, ${SEA.gold} 0%, ${SEA.brass} 60%, ${SEA.brassDark} 100%)`,
+                    border: `1.5px solid ${SEA.ink}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: '"Anek Bangla", sans-serif', fontSize: 10, fontWeight: 700, color: SEA.ink,
+                  }}>{BN_NUM[card.value]}</div>
+
+                  {/* Illustration thumbnail */}
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 7,
+                    border: `2px solid ${isPicked ? SEA.gold : card.ring}`,
+                    overflow: 'hidden',
+                    boxShadow: `0 2px 6px rgba(0,0,0,0.4)`,
+                    marginTop: 6,
+                  }}>
+                    <img
+                      src={card.img}
+                      alt={card.bn}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', display: 'block' }}
+                    />
+                  </div>
+
+                  {/* Bengali name */}
+                  <div style={{
+                    fontFamily: '"Anek Bangla", sans-serif',
+                    fontSize: 11, fontWeight: 700, lineHeight: 1.2,
+                    color: isPicked ? SEA.ocean : SEA.ink,
+                    textAlign: 'center',
+                  }}>{card.bn}</div>
+
                   {isPicked && (
                     <div style={{
-                      position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-                      background: SEA.gold, border: `2.5px solid ${SEA.ink}`, borderRadius: 999,
-                      padding: '4px 12px',
-                      fontFamily: '"Anek Bangla", sans-serif', fontSize: 13, fontWeight: 700, color: SEA.ink,
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.4)', whiteSpace: 'nowrap',
-                    }}>অভিযোগ</div>
+                      position: 'absolute', top: -9, right: -9,
+                      width: 20, height: 20, borderRadius: '50%',
+                      background: SEA.gold, border: `1.5px solid ${SEA.ink}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 700, color: SEA.ink,
+                    }}>✓</div>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -911,6 +958,44 @@ function RippedCard({ cardId, w }) {
   );
 }
 
+// ─── 5. Peek Popup — Crew / Deckhand card reveal ──────────────────────────────
+function PeekPopup({ cardId, targetName, onClose }) {
+  const card = BY_ID[cardId] || ROSTER[0];
+  return (
+    <PopupBackdrop zIndex={85}>
+      <PopupChrome
+        title="গোপনে দেখছেন"
+        subtitle={`${targetName}-এর তাস`}
+        accentCard="👁"
+        width={480}
+        footer={<PopupButton label="ঠিক আছে!" primary onClick={onClose} />}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, padding: '4px 0 8px' }}>
+          <div style={{
+            padding: '10px 18px',
+            background: `rgba(77,160,176,0.15)`,
+            border: `2px dashed ${SEA.teal}`,
+            borderRadius: 10,
+            fontFamily: '"Anek Bangla", sans-serif',
+            fontSize: 14, color: SEA.woodDark, textAlign: 'center', lineHeight: 1.5,
+          }}>
+            এই তথ্য শুধু আপনিই দেখতে পাচ্ছেন
+          </div>
+          <div style={{ transform: 'rotate(-2deg)', filter: `drop-shadow(0 0 18px ${SEA.teal})` }}>
+            <SeaCard id={cardId} w={170} highlight />
+          </div>
+          <div style={{
+            fontFamily: '"Anek Bangla", sans-serif',
+            fontSize: 18, fontWeight: 700, color: SEA.ocean,
+          }}>
+            {card.bn} — শক্তি {BN_NUM[card.value]}
+          </div>
+        </div>
+      </PopupChrome>
+    </PopupBackdrop>
+  );
+}
+
 // ─── Global animation styles — injected once ──────────────────────────────
 
 (function injectPopupCSS(){
@@ -947,5 +1032,5 @@ function RippedCard({ cardId, w }) {
 
 Object.assign(window, {
   PopupBackdrop, PopupChrome, PopupButton,
-  PlayerPickerPopup, CardPickerPopup, DuelPopup, CannonBlastPopup, DeathPopup,
+  PlayerPickerPopup, CardPickerPopup, PeekPopup, DuelPopup, CannonBlastPopup, DeathPopup,
 });
